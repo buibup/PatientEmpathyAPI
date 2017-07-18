@@ -1,4 +1,5 @@
 ﻿using InterSystems.Data.CacheClient;
+using PatientEmpathy.Common;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,6 +10,71 @@ namespace CRMWebApi.DA
 {
     public class InterSystemsDA
     {
+        public static DataTable DTBindDataCommandWithValues(string cmdString, string conString, string hn)
+        {
+            DataTable dt = new DataTable();
+
+            using (var con = new CacheConnection(conString))
+            {
+                con.Open();
+                using (var cmd = new CacheCommand(cmdString, con))
+                {
+                    cmd.AddInputParameters(new { PAPMI_No = hn });
+                    using (CacheDataReader reader = cmd.ExecuteReader())
+                    {
+                        dt.Load(reader);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        public static DataTable DTBindDataCommandWithValuesMultiple(string cmdString, string conString, string hn)
+        {
+            DataTable dt = new DataTable();
+
+            using (var con = new CacheConnection(conString))
+            {
+                con.Open();
+                using (var cmd = new CacheCommand(cmdString, con))
+                {
+                    cmd.AddInputParameters(new { PAPMI_No = hn, PAPMI_No1 = hn });
+                    using (CacheDataReader reader = cmd.ExecuteReader())
+                    {
+                        dt.Load(reader);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+        public static DataTable DTBindDataCommandWihDictionary(string cmdString, string conString, Dictionary<string, string> dics)
+        {
+            DataTable dt = new DataTable();
+            using (var con = new CacheConnection(conString))
+            {
+                con.Open();
+
+                using (var cmd = new CacheCommand(cmdString, con))
+                {
+                    foreach(KeyValuePair<string,string> pair in dics)
+                    {
+                        var key = pair.Key;
+                        cmd.AddInputParameters(new { key = pair.Value });
+                    }
+                    using(var reader = cmd.ExecuteReader())
+                    {
+                        dt.Load(reader);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+
         public static DataTable DTBindDataCommand(string cmdString, string conString)
         {
             DataTable dt = new DataTable();
@@ -57,7 +123,7 @@ namespace CRMWebApi.DA
 
                         return result;
                     }
-                    
+
                 }
             }
 

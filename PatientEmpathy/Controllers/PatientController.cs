@@ -9,6 +9,10 @@ namespace PatientEmpathy.Controllers
     public class PatientController : ApiController
     {
         private IPatientRepository _patientRepository;
+        public PatientController()
+        {
+            _patientRepository = new PatientRepository();
+        }
 
         [HttpGet]
         public bool IsPatientDischarge(string epiNo)
@@ -100,6 +104,12 @@ namespace PatientEmpathy.Controllers
         {
             _patientRepository = new PatientRepository();
             return _patientRepository.GetPatientImage(hn, width, height);
+        }
+
+        [HttpGet]
+        public string GetLocationByLineBeacon(string beaconId)
+        {
+            return _patientRepository.GetLocationByLineBeacon(beaconId);
         }
     }
 }

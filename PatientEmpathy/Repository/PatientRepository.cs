@@ -32,19 +32,21 @@ namespace PatientEmpathy.Repository
                     {
                         if (reader.Read())
                         {
-                            epiInq = new EpisodeInquiry();
-                            epiInq.PAADM_ADMNo = reader["PAADM_ADMNo"].ToString();
-                            epiInq.PAADM_AdmDate = Helper.ConvertDate(reader["PAADM_AdmDate"].ToString());
-                            epiInq.PAADM_AdmTime = Convert.ToDateTime(reader["PAADM_AdmTime"].ToString()).ToString("HH:mm");
-                            epiInq.CTLOC_Code = reader["CTLOC_Code"].ToString();
-                            epiInq.CTLOC_Desc = reader["CTLOC_Desc"].ToString();
-                            epiInq.CTPCP_Code = reader["CTPCP_Code"].ToString();
-                            epiInq.CTPCP_Desc = reader["CTPCP_Desc"].ToString();
-                            epiInq.PAADM_Type = reader["PAADM_Type"].ToString();
-                            epiInq.PAADM_VisitStatus = reader["PAADM_VisitStatus"].ToString();
-                            epiInq.WARD_Code = reader["WARD_Code"].ToString();
-                            epiInq.WARD_Desc = reader["WARD_Desc"].ToString();
-                            epiInq.ROOM_Code = reader["ROOM_Code"].ToString();
+                            epiInq = new EpisodeInquiry()
+                            {
+                                PAADM_ADMNo = reader["PAADM_ADMNo"].ToString(),
+                                PAADM_AdmDate = Helper.ConvertDate(reader["PAADM_AdmDate"].ToString()),
+                                PAADM_AdmTime = Convert.ToDateTime(reader["PAADM_AdmTime"].ToString()).ToString("HH:mm"),
+                                CTLOC_Code = reader["CTLOC_Code"].ToString(),
+                                CTLOC_Desc = reader["CTLOC_Desc"].ToString(),
+                                CTPCP_Code = reader["CTPCP_Code"].ToString(),
+                                CTPCP_Desc = reader["CTPCP_Desc"].ToString(),
+                                PAADM_Type = reader["PAADM_Type"].ToString(),
+                                PAADM_VisitStatus = reader["PAADM_VisitStatus"].ToString(),
+                                WARD_Code = reader["WARD_Code"].ToString(),
+                                WARD_Desc = reader["WARD_Desc"].ToString(),
+                                ROOM_Code = reader["ROOM_Code"].ToString()
+                            };
                         }
                     }
                 }
@@ -67,10 +69,11 @@ namespace PatientEmpathy.Repository
                     {
                         while (reader.Read())
                         {
-                            loc = new Location();
-                            loc.CTLOC_Code = reader["CTLOC_Code"].ToString();
-                            loc.CTLOC_Desc = reader["CTLOC_Desc"].ToString();
-
+                            loc = new Location()
+                            {
+                                CTLOC_Code = reader["CTLOC_Code"].ToString(),
+                                CTLOC_Desc = reader["CTLOC_Desc"].ToString()
+                            };
                             locations.Add(loc);
                         }
                     }
@@ -80,7 +83,7 @@ namespace PatientEmpathy.Repository
             return locations;
         }
 
-        public List<Room> GetRoom(string buId,string ward)
+        public List<Room> GetRoom(string buId, string ward)
         {
             List<Room> Rooms = new List<Room>();
             Room room = null;
@@ -88,17 +91,18 @@ namespace PatientEmpathy.Repository
             using (var con = new CacheConnection(cache89ConString))
             {
                 con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetRoom(buId,ward), con))
+                using (var cmd = new CacheCommand(QueryString.GetRoom(buId, ward), con))
                 {
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
                         {
-                            room = new Room();
-                            room.WARD_Code = reader["WARD_Code"].ToString();
-                            room.ROOM_Code = reader["ROOM_Code"].ToString();
-                            room.ROOM_Desc = reader["ROOM_Desc"].ToString();
-
+                            room = new Room()
+                            {
+                                WARD_Code = reader["WARD_Code"].ToString(),
+                                ROOM_Code = reader["ROOM_Code"].ToString(),
+                                ROOM_Desc = reader["ROOM_Desc"].ToString()
+                            };
                             Rooms.Add(room);
                         }
                     }
@@ -121,10 +125,11 @@ namespace PatientEmpathy.Repository
                     {
                         while (reader.Read())
                         {
-                            ward = new Ward();
-                            ward.WARD_Code = reader["WARD_Code"].ToString();
-                            ward.WARD_Desc = reader["WARD_Desc"].ToString();
-
+                            ward = new Ward()
+                            {
+                                WARD_Code = reader["WARD_Code"].ToString(),
+                                WARD_Desc = reader["WARD_Desc"].ToString()
+                            };
                             Wards.Add(ward);
                         }
                     }
@@ -150,9 +155,11 @@ namespace PatientEmpathy.Repository
                     {
                         while (reader.Read())
                         {
-                            pt = new Patient();
-                            pt.PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString());
-                            pt.PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString());
+                            pt = new Patient()
+                            {
+                                PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString()),
+                                PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString())
+                            };
                             patients.Add(pt);
                         }
                     }
@@ -178,9 +185,11 @@ namespace PatientEmpathy.Repository
                     {
                         while (reader.Read())
                         {
-                            pt = new Patient();
-                            pt.PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString());
-                            pt.PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString());
+                            pt = new Patient()
+                            {
+                                PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString()),
+                                PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString())
+                            };
                             patients.Add(pt);
                         }
 
@@ -212,9 +221,11 @@ namespace PatientEmpathy.Repository
                         {
                             while (reader.Read())
                             {
-                                pt = new Patient();
-                                pt.PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString());
-                                pt.PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString());
+                                pt = new Patient()
+                                {
+                                    PatientInfo = Helper.JsonStringToPatientInfo(reader["JsonData"].ToString()),
+                                    PatientLab = Helper.JsonStringToPatientLab(reader["Labjson"].ToString())
+                                };
                                 patients.Add(pt);
                             }
                         }
@@ -285,9 +296,12 @@ namespace PatientEmpathy.Repository
                                 ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(), reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(), reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
                                 ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
                                 ptInfo.IsImage = GetData.IsImage(hn);
+                                ptInfo.AlertMsgs = GetData.GetAlertMsg(hn);
+                                ptInfo.PatientCategory = GetData.GetPatientCategory(hn);
                                 ptInfo.Episode = GetData.GetEpisode(hn);
                                 ptInfo.Appointments = GetData.GetAppointment(hn);
                                 ptInfo.Allergys = GetData.GetAllergys(hn);
+
                                 try
                                 {
                                     ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
@@ -380,9 +394,11 @@ namespace PatientEmpathy.Repository
             List<PatientLab> ptLabList = new List<PatientLab>();
             PatientLab ptLab = null;
 
-            Dictionary<string, object> paras = new Dictionary<string, object>();
-            paras.Add("iHN", hn);
-            paras.Add("iEpiNo", epiNo);
+            Dictionary<string, object> paras = new Dictionary<string, object>
+            {
+                { "iHN", hn },
+                { "iEpiNo", epiNo }
+            };
 
             //string procedureString = "\"Custom_THSV_Report_ZEN_StoredProc\".\"SVNHRptEprLabResult_GetData\"";
             string procedureString = @"Custom_THSV_Report_ZEN_StoredProc.SVNHRptEprLabResult_GetData";
@@ -391,23 +407,25 @@ namespace PatientEmpathy.Repository
             {
                 foreach (DataRow row in results.Rows)
                 {
-                    ptLab = new PatientLab();
-                    ptLab.DateOfAuth = row["DateOfAuth"].ToString();
-                    ptLab.DateOfRec = row["DateOfRec"].ToString();
-                    ptLab.LabNo = row["LabNo"].ToString();
-                    ptLab.Department = row["Department"].ToString();
-                    ptLab.HosCode = row["HosCode"].ToString();
-                    ptLab.HosDesc = row["HosDesc"].ToString();
-                    ptLab.tsCode = row["tsCode"].ToString();
-                    ptLab.tsName = row["tsName"].ToString();
-                    ptLab.tcCode = row["tcCode"].ToString();
-                    ptLab.tcname = row["tcname"].ToString();
-                    ptLab.unit = row["unit"].ToString();
-                    ptLab.data = row["data"].ToString();
-                    ptLab.flag = row["flag"].ToString();
-                    ptLab.low = row["low"].ToString();
-                    ptLab.high = row["high"].ToString();
-                    ptLab.Reference = row["Reference"].ToString();
+                    ptLab = new PatientLab()
+                    {
+                        DateOfAuth = row["DateOfAuth"].ToString(),
+                        DateOfRec = row["DateOfRec"].ToString(),
+                        LabNo = row["LabNo"].ToString(),
+                        Department = row["Department"].ToString(),
+                        HosCode = row["HosCode"].ToString(),
+                        HosDesc = row["HosDesc"].ToString(),
+                        tsCode = row["tsCode"].ToString(),
+                        tsName = row["tsName"].ToString(),
+                        tcCode = row["tcCode"].ToString(),
+                        tcname = row["tcname"].ToString(),
+                        unit = row["unit"].ToString(),
+                        data = row["data"].ToString(),
+                        flag = row["flag"].ToString(),
+                        low = row["low"].ToString(),
+                        high = row["high"].ToString(),
+                        Reference = row["Reference"].ToString()
+                    };
                     ptLabList.Add(ptLab);
                 }
             }
@@ -451,6 +469,34 @@ namespace PatientEmpathy.Repository
             response = Helper.DataTableToImage(dt, width, height);
 
             return response;
+        }
+
+        public string GetLocationByLineBeacon(string beaconId)
+        {
+            string result = string.Empty;
+
+            var query = QueryString.GetLocationByLineBeacon(beaconId);
+
+            using (var con = new NpgsqlConnection(Constants.PostgreSQL))
+            {
+                con.Open();
+                using (var cmd = new NpgsqlCommand(query.Item1, con))
+                {
+                    foreach (KeyValuePair<string, string> pair in query.Item2)
+                    {
+                        cmd.Parameters.AddWithValue(pair.Key, pair.Value);
+                    }
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            result = reader["CTLOC_CODE"].ToString();
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }

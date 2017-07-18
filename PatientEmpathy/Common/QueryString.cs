@@ -125,22 +125,103 @@ namespace PatientEmpathy.Common
         {
             string result = @"
 
-            SELECT APPT_AS_ParRef->AS_Date
+
+            SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,120) AS_DateStr
+            ,APPT_AS_ParRef->AS_Date
             ,APPT_AS_ParRef->AS_SessStartTime
             ,APPT_Status
+            ,APPT_Adm_DR->PAADM_VisitStatus
             ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTLOC_DR->CTLOC_Code
             ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTLOC_DR->CTLOC_Desc
             ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTPCP_DR->CTPCP_Desc 
             ,APPT_RBCServ_DR->SER_Desc
             FROM RB_Appointment
-            WHERE APPT_Adm_DR->PAADM_PAPMI_DR->PAPMI_No = '{hn}'
-            and APPT_AS_ParRef->AS_Date >= getdate() and APPT_Status = 'P'
+            WHERE APPT_Adm_DR->PAADM_PAPMI_DR->PAPMI_No = ?
+            and APPT_AS_ParRef->AS_Date >= getdate() and APPT_Adm_DR->PAADM_VisitStatus = 'P'
+            and APPT_AS_ParRef->AS_Date IN
+            (
+            	SELECT DISTINCT TOP 2 APPT_AS_ParRef->AS_Date
+	            FROM
+	            RB_Appointment
+	            WHERE
+	            APPT_Adm_DR -> PAADM_PAPMI_DR -> PAPMI_No = ?
+	            AND APPT_Adm_DR -> PAADM_ADMNO IS  NULL
+	            AND APPT_Adm_DR -> PAADM_VisitStatus <> 'A'
+	            and APPT_Adm_DR -> PAADM_ADMDATE >= GetDate()
+	            Order by
+	            APPT_Adm_DR -> PAADM_ADMDATE ,
+	            APPT_Adm_DR -> PAADM_ADMTIME 
+            )
             order by APPT_AS_ParRef->AS_Date,APPT_AS_ParRef->AS_SessStartTime
+            
+            
 
             ";
 
-            result = result.Replace("{hn}", hn);
+            return result;
+        }
 
+        public static string GetAppointmentsCurrent(string hn)
+        {
+            string result = @"
+            
+           SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,120) AS_DateStr
+            ,APPT_AS_ParRef->AS_Date
+            ,APPT_AS_ParRef->AS_SessStartTime
+            ,APPT_Status
+            ,APPT_Adm_DR->PAADM_VisitStatus
+            ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTLOC_DR->CTLOC_Code
+            ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTLOC_DR->CTLOC_Desc
+            ,APPT_AS_ParRef->AS_RES_ParRef->RES_CTPCP_DR->CTPCP_Desc 
+            ,APPT_RBCServ_DR->SER_Desc
+            FROM RB_Appointment
+            WHERE APPT_Adm_DR->PAADM_PAPMI_DR->PAPMI_No = ?
+            and APPT_Adm_DR->PAADM_VisitStatus = 'A'
+            order by APPT_AS_ParRef->AS_Date , APPT_AS_ParRef->AS_SessStartTime 
+
+            ";
+            return result;
+        }
+
+        public static string GetAppointmentsPast(string hn)
+        {
+            string result = @"
+            SELECT
+            CONVERT(
+            VARCHAR(10),
+            APPT_AS_ParRef -> AS_Date,
+            120
+            ) AS_DateStr,
+            APPT_AS_ParRef -> AS_Date,
+            APPT_AS_ParRef -> AS_SessStartTime,
+            APPT_Status,
+            APPT_Adm_DR -> PAADM_VisitStatus,
+            APPT_AS_ParRef -> AS_RES_ParRef -> RES_CTLOC_DR -> CTLOC_Code,
+            APPT_AS_ParRef -> AS_RES_ParRef -> RES_CTLOC_DR -> CTLOC_Desc,
+            APPT_AS_ParRef -> AS_RES_ParRef -> RES_CTPCP_DR -> CTPCP_Desc,
+            APPT_RBCServ_DR -> SER_Desc
+            FROM
+            RB_Appointment
+            WHERE
+            APPT_Adm_DR -> PAADM_PAPMI_DR -> PAPMI_No = ?
+            and APPT_Adm_DR -> PAADM_ADMNO in(
+            SELECT
+            DISTINCT TOP 2 APPT_Adm_DR -> PAADM_ADMNO
+            FROM
+            RB_Appointment
+            WHERE
+            APPT_Adm_DR -> PAADM_PAPMI_DR -> PAPMI_No = ?
+            AND APPT_Adm_DR -> PAADM_ADMNO IS NOT NULL
+            AND APPT_Adm_DR -> PAADM_VisitStatus <> 'A'
+            Order by
+            APPT_Adm_DR -> PAADM_ADMDATE DESC,
+            APPT_Adm_DR -> PAADM_ADMTIME DESC
+            )
+            Order by
+            APPT_AS_ParRef -> AS_Date DESC,
+            APPT_AS_ParRef -> AS_SessStartTime DESC      
+                                                                   
+            ";
             return result;
         }
 
@@ -314,6 +395,54 @@ namespace PatientEmpathy.Common
             result = result.Replace("{hn}", hn);
 
             return result;
+        }
+
+        public static Tuple<string,Dictionary<string,string>> GetAlertMsg(string hn)
+        {
+            string result = @"
+                SELECT ALM_AlertCategory_DR->ALERTCAT_Code
+                ,ALM_AlertCategory_DR->ALERTCAT_Desc
+                ,ALM_Message,ALM_Status
+                FROM PA_AlertMsg
+                WHERE ALM_PAPMI_ParRef->PAPMI_No = ?
+                AND ALM_Status = 'A'
+            ";
+
+            //result = result.Replace("{hn}", hn);
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("PAPMI_No", hn);
+
+            return new Tuple<string, Dictionary<string, string>>(result,dic);
+        }
+
+        public static Tuple<string, Dictionary<string,string>> GetPatientCategory(string hn)
+        {
+            string result = @"
+                SELECT PAPMI_PatCategory_DR->PCAT_Code, PAPMI_PatCategory_DR->PCAT_Desc 
+                FROM PA_PATMAS 
+                WHERE PAPMI_No = ?
+            ";
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("PAPMI_No", hn);
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> GetLocationByLineBeacon(string beaconId)
+        {
+            string result = @"
+                SELECT ""LineBeacon_CODE"", ""Location_LineBeacon"".""CTLOC_CODE"", ""Location"".""CTLOC_DESC"", ""Location"".""CTLOC_FLOOR""
+                FROM ""Location_LineBeacon""
+                INNER JOIN ""Location"" ON(""Location_LineBeacon"".""CTLOC_CODE"" = ""Location"".""CTLOC_CODE"")
+                WHERE ""LineBeacon_CODE"" = @beaconId
+            ";
+
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            dic.Add("@beaconId", beaconId);
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
         }
     }
 }

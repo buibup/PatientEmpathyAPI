@@ -24,5 +24,6 @@ namespace PatientEmpathy.Repository
         List<Ward> GetWard(string buId);
         HttpResponseMessage GetPatientImage(string hn);
         HttpResponseMessage GetPatientImage(string hn, int width, int height);
+        string GetLocationByLineBeacon(string beaconId);
     }
 }
