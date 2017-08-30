@@ -65,7 +65,7 @@ namespace PatientEmpathy.Controllers
         public List<Patient> GetPatientByHN(string hn)
         {
             _patientRepository = new PatientRepository();
-            return _patientRepository.GetPatientByHN(hn);
+            return _patientRepository.GetPatientByHn(hn);
         }
 
         [HttpGet]
@@ -106,10 +106,62 @@ namespace PatientEmpathy.Controllers
             return _patientRepository.GetPatientImage(hn, width, height);
         }
 
-        [HttpGet]
+        [HttpPost]
         public string GetLocationByLineBeacon(string beaconId)
         {
             return _patientRepository.GetLocationByLineBeacon(beaconId);
+        }
+
+        [HttpPost]
+        public BeaconLocation GetBeaconLocation(string beaconId)
+        {
+            return _patientRepository.GetBeaconLocation(beaconId);
+        }
+
+        [HttpPost]
+        public Discharges GetDischarges(string hn)
+        {
+            return _patientRepository.GetDischarges(hn);
+        }
+        public bool UpdateAllDisch()
+        {
+            return _patientRepository.UpdateAllDisch();
+        }
+        public bool UpdatePromptPay(string hn, string message)
+        {
+            return _patientRepository.UpdatePromptPay(hn, message);
+        }
+        public bool UpdateRegisLoc(string hn)
+        {
+            return _patientRepository.UpdateRegisLoc(hn);
+        }
+
+        [HttpGet]
+        public List<Location> GetLocation(string site, string type)
+        {
+            return _patientRepository.GetLocation(site, type);
+        }
+
+        public bool UpdateNewRegis(string hn, string loc)
+        {
+            return _patientRepository.UpdateNewRegis(hn, loc);
+        }
+
+        public bool UpdatePatientBilled()
+        {
+            return _patientRepository.UpdatePatientBilled();
+        }
+
+        [HttpPost]
+        public bool UpdateSeeToDoctor()
+        {
+            return _patientRepository.UpdateSeeToDoctor();
+        }
+
+        [HttpPost]
+        public bool UpdatePharCollect()
+        {
+            return _patientRepository.UpdatePharCollect();
         }
     }
 }

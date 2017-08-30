@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
 
 namespace PatientEmpathy.Common
 {
@@ -9,7 +7,7 @@ namespace PatientEmpathy.Common
     {
         public static string IsPatientDischarge(string epiNo)
         {
-            string result = @"
+            var result = @"
             
                 Select PAADM_DischgDate
                 From Pa_Adm
@@ -25,7 +23,7 @@ namespace PatientEmpathy.Common
 
         public static string GetEpisodeInquiry(string hn)
         {
-            string result = @"
+            var result = @"
 
                 SELECT PAADM_ADMNo
                 ,PAADM_AdmDate
@@ -41,7 +39,7 @@ namespace PatientEmpathy.Common
                 ,PAADM_CurrentRoom_DR->ROOM_Code
                 FROM pa_adm
                 WHERE PAADM_PAPMI_DR->PAPMI_No = '{hn}'
-                and convert(varchar(10),PAADM_AdmDate ,120) = convert(varchar(10),Getdate(),120)
+                AND PAADM_AdmDate = CURRENT_DATE
 
             ";
 
@@ -52,7 +50,7 @@ namespace PatientEmpathy.Common
 
         public static string GetPatientInfo(string hn)
         {
-            string result = @"
+            var result = @"
 
                 SELECT PAPMI_No
                 ,PAPMI_Title_DR->TTL_Desc
@@ -78,18 +76,18 @@ namespace PatientEmpathy.Common
             return result;
         }
 
-        public static string GetPatientHN(string epiNo)
+        public static string GetPatientHn(string epiNo)
         {
-            string result = @"SELECT PAADM_PAPMI_DR->Papmi_No 
+            var result = @"SELECT PAADM_PAPMI_DR->Papmi_No 
                             FROM pa_adm WHERE PAADM_ADMNo = '{epiNo}'";
             result = result.Replace("{epiNo}", epiNo);
 
             return result;
         }
 
-        public static string GetICD9(string epiNo)
+        public static string GetIcd9(string epiNo)
         {
-            string result = @"
+            var result = @"
 
                 SELECT RBOP_PAADM_DR->OR_Anaesthesia->OR_Anaest_Operation->ANAOP_Type_DR->OPER_Code
                 ,RBOP_PAADM_DR->OR_Anaesthesia->OR_Anaest_Operation->ANAOP_Type_DR->OPER_Desc 
@@ -104,9 +102,9 @@ namespace PatientEmpathy.Common
             return result;
         }
 
-        public static string GetICD10(string epiNo)
+        public static string GetIcd10(string epiNo)
         {
-            string result = @"
+            var result = @"
 
                 SELECT PAADM_MainMRADM_DR->MR_Diagnos->MRDIA_ICDCode_DR->MRCID_Code
                 ,PAADM_MainMRADM_DR->MR_Diagnos->MRDIA_ICDCode_DR->MRCID_Desc
@@ -123,11 +121,10 @@ namespace PatientEmpathy.Common
 
         public static string GetAppointments(string hn)
         {
-            string result = @"
+            const string result = @"
 
-
-            SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,120) AS_DateStr
-            ,APPT_AS_ParRef->AS_Date
+            SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,103) AS_Date
+            ,APPT_AS_ParRef->AS_Date AS_Date1
             ,APPT_AS_ParRef->AS_SessStartTime
             ,APPT_Status
             ,APPT_Adm_DR->PAADM_VisitStatus
@@ -153,8 +150,6 @@ namespace PatientEmpathy.Common
 	            APPT_Adm_DR -> PAADM_ADMTIME 
             )
             order by APPT_AS_ParRef->AS_Date,APPT_AS_ParRef->AS_SessStartTime
-            
-            
 
             ";
 
@@ -163,10 +158,10 @@ namespace PatientEmpathy.Common
 
         public static string GetAppointmentsCurrent(string hn)
         {
-            string result = @"
+            const string result = @"
             
-           SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,120) AS_DateStr
-            ,APPT_AS_ParRef->AS_Date
+           SELECT CONVERT(VARCHAR(10),APPT_AS_ParRef->AS_Date,103) AS_Date
+            ,APPT_AS_ParRef->AS_Date AS_Date1
             ,APPT_AS_ParRef->AS_SessStartTime
             ,APPT_Status
             ,APPT_Adm_DR->PAADM_VisitStatus
@@ -185,14 +180,14 @@ namespace PatientEmpathy.Common
 
         public static string GetAppointmentsPast(string hn)
         {
-            string result = @"
+            const string result = @"
             SELECT
             CONVERT(
             VARCHAR(10),
             APPT_AS_ParRef -> AS_Date,
-            120
-            ) AS_DateStr,
-            APPT_AS_ParRef -> AS_Date,
+            103
+            ) AS_Date,
+            APPT_AS_ParRef -> AS_Date AS_Date1,
             APPT_AS_ParRef -> AS_SessStartTime,
             APPT_Status,
             APPT_Adm_DR -> PAADM_VisitStatus,
@@ -227,7 +222,7 @@ namespace PatientEmpathy.Common
 
         public static string GetAllergy(string hn)
         {
-            string alg = @"
+            var alg = @"
 
                 SELECT ALG_Comments
                 ,ALG_PHCGE_DR->PHCGE_Name
@@ -247,7 +242,7 @@ namespace PatientEmpathy.Common
 
         public static string GetAllergyCategory(string algName)
         {
-            string algCat = @"
+            var algCat = @"
 
                 SELECT ALG_Type_DR->MRCAT_Desc
                 FROM PAC_Allergy
@@ -262,7 +257,7 @@ namespace PatientEmpathy.Common
 
         public static string GetLastEpisode(string hn)
         {
-            string result = @"
+            var result = @"
 
                 SELECT top 1 PAADM_ADMNo
                 FROM pa_adm
@@ -278,7 +273,7 @@ namespace PatientEmpathy.Common
 
         public static string GetPatient(string date)
         {
-            string result = @"
+            var result = @"
 
                 select ""JsonData"",""Labjson"" from  ""Admission""  where ""DateAdd"" ='{date}' 
 
@@ -291,7 +286,7 @@ namespace PatientEmpathy.Common
 
         public static string GetPatient(string date, string locCode)
         {
-            string result = @"
+            var result = @"
 
                 select ""JsonData"",""Labjson"" 
                 from  ""Admission""  
@@ -307,7 +302,7 @@ namespace PatientEmpathy.Common
 
         public static string GetPatientByHn(string hn)
         {
-            string result = @"
+            var result = @"
 
                 select ""JsonData"",""Labjson"" from  ""Admission""  where ""HN"" ='{hn}' 
 
@@ -318,34 +313,42 @@ namespace PatientEmpathy.Common
             return result;
         }
 
-        public static string GetLocation(string site)
+        public static Tuple<string, Dictionary<string, string>> GetLocation(string site, string type="")
         {
+            var dic = new Dictionary<string, string>();
+            string result;
+            site = site.ToUpper().Trim();
+            type = string.IsNullOrWhiteSpace(type)? "" : type.ToUpper().Trim();
 
-            if (site.ToUpper().Trim() == "SNH")
+            site = site == "SNH" ? "12" : "11";
+
+            if (string.IsNullOrEmpty(type) || type == "ALL")
             {
-                site = "13";
+                result = @"
+                    SELECT CTLOC_Code,CTLOC_Desc
+                    FROM CT_Loc
+                    WHERE SUBSTRING(CTLOC_Code,0,3) = ? and  CTLOC_DateActiveTo is null
+                    order by CTLOC_Desc
+                ";
+                dic.Add("CTLOC_Code", site);
             }
             else
             {
-                site = "12";
+                result = @"
+                    select CTLOC_Code,CTLOC_Desc,CTLOC_RowID ,CTLOC_Hospital_DR,* from ct_LOC
+                    where SUBSTRING(CTLOC_Code,0,3) = ? and CTLOC_Type = ? and CTLOC_DateActiveTo is null
+                ";
+                // C = Cashier, D = Pharmacy
+                dic.Add("CTLOC_Code", site);
+                dic.Add("CTLOC_Type", type);
             }
-
-            string result = @"
-
-                SELECT CTLOC_Code,CTLOC_Desc
-                FROM CT_Loc
-                WHERE CTLOC_Hospital_DR = '{site}'  and  CTLOC_DateActiveTo is null
-                order by CTLOC_Hospital_DR,CTLOC_Code
-            ";
-
-            result = result.Replace("{site}", site);
-
-            return result;
+            
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
         }
 
-        public static string GetRoom(string buId,string ward)
+        public static string GetRoom(string buId, string ward)
         {
-            string result = @"
+            var result = @"
 
                 SELECT ROOM_ParRef->WARD_Code,ROOM_Room_DR->ROOM_Code,ROOM_Room_DR->ROOM_Desc
                 FROM PAC_WardRoom
@@ -353,22 +356,23 @@ namespace PatientEmpathy.Common
                 and left(ROOM_ParRef->WARD_Desc,3)<> 'ZZZ'
                 and isnull(ROOM_Room_DR->ROOM_Code,'') not in ('','11FN','12FN') 
                 and ROOM_ParRef->WARD_Code not in ('11W7R','12LTC') ";
-            if (ward != "%" && ward != "" && ward != null)
+            if (ward != "%" && !string.IsNullOrEmpty(ward))
             {
-                result += "and ROOM_ParRef->WARD_Code = '"+ ward +"' ";
-            }else
+                result += "and ROOM_ParRef->WARD_Code = '" + ward + "' ";
+            }
+            else
             {
                 result += "and left(ROOM_ParRef->WARD_Code,2) = '" + buId + "' ";
             }
             result += "order by left(ROOM_ParRef->WARD_Code,2),ROOM_Room_DR->ROOM_Code ";
-           
+
 
             return result;
         }
 
         public static string GetWard(string buId)
         {
-            string result = @"
+            var result = @"
 
                 SELECT distinct ROOM_ParRef->WARD_Code,ROOM_ParRef->WARD_Desc
                 FROM PAC_WardRoom
@@ -385,7 +389,7 @@ namespace PatientEmpathy.Common
         }
         public static string GetPatientImage(string hn)
         {
-            string result = @"
+            var result = @"
 
             select PAPMI_RowId->PAPER_PHOTODocument->docData As ImageHN
             from PA_Patmas where PAPMI_NO ='{hn}'
@@ -397,9 +401,9 @@ namespace PatientEmpathy.Common
             return result;
         }
 
-        public static Tuple<string,Dictionary<string,string>> GetAlertMsg(string hn)
+        public static Tuple<string, Dictionary<string, string>> GetAlertMsg(string hn)
         {
-            string result = @"
+            const string result = @"
                 SELECT ALM_AlertCategory_DR->ALERTCAT_Code
                 ,ALM_AlertCategory_DR->ALERTCAT_Desc
                 ,ALM_Message,ALM_Status
@@ -410,39 +414,234 @@ namespace PatientEmpathy.Common
 
             //result = result.Replace("{hn}", hn);
 
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("PAPMI_No", hn);
+            var dic = new Dictionary<string, string> {{"PAPMI_No", hn}};
 
-            return new Tuple<string, Dictionary<string, string>>(result,dic);
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
         }
 
-        public static Tuple<string, Dictionary<string,string>> GetPatientCategory(string hn)
+        public static Tuple<string, Dictionary<string, string>> GetPatientCategory(string hn)
         {
-            string result = @"
+            const string result = @"
                 SELECT PAPMI_PatCategory_DR->PCAT_Code, PAPMI_PatCategory_DR->PCAT_Desc 
                 FROM PA_PATMAS 
                 WHERE PAPMI_No = ?
             ";
 
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("PAPMI_No", hn);
+            var dic = new Dictionary<string, string> {{"PAPMI_No", hn}};
 
             return new Tuple<string, Dictionary<string, string>>(result, dic);
         }
 
         public static Tuple<string, Dictionary<string, string>> GetLocationByLineBeacon(string beaconId)
         {
-            string result = @"
+            const string result = @"
                 SELECT ""LineBeacon_CODE"", ""Location_LineBeacon"".""CTLOC_CODE"", ""Location"".""CTLOC_DESC"", ""Location"".""CTLOC_FLOOR""
                 FROM ""Location_LineBeacon""
                 INNER JOIN ""Location"" ON(""Location_LineBeacon"".""CTLOC_CODE"" = ""Location"".""CTLOC_CODE"")
                 WHERE ""LineBeacon_CODE"" = @beaconId
             ";
 
-            Dictionary<string, string> dic = new Dictionary<string, string>();
-            dic.Add("@beaconId", beaconId);
+            var dic = new Dictionary<string, string> {{"@beaconId", beaconId}};
 
             return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> GetMedDisch(string hn)
+        {
+            const string result = @"
+
+                SELECT PAADM_MedDischDate,PAADM_MedDischTime,PAADM_ADMNO
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR-> PAPMI_NO = ?
+                AND PAADM_AdmDate = CURRENT_DATE
+                AND SUBSTRING(PAADM_ADMNO,0,2) = 'O'
+                AND PAADM_VisitStatus in ('A','D')  
+            ";
+
+            var dic = new Dictionary<string, string> {{"PAPMI_NO", hn}};
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+        public static Tuple<string, Dictionary<string, string>> GetFinDisc(string hn)
+        {
+            const string result = @"
+
+                SELECT PAADM_FinDischDate,PAADM_FinDischTime,PAADM_ADMNO
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR-> PAPMI_NO = ?
+                AND PAADM_AdmDate = CURRENT_DATE
+                AND SUBSTRING(PAADM_ADMNO,0,2) = 'O'
+                AND PAADM_VisitStatus in ('A','D')  
+            ";
+
+            var dic = new Dictionary<string, string> {{"PAPMI_NO", hn}};
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+        public static Tuple<string, Dictionary<string, string>> GetDischg(string hn)
+        {
+            const string result = @"
+
+                SELECT PAADM_DischgDate,PAADM_DischgTime,PAADM_ADMNO
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR-> PAPMI_NO = ?
+                AND PAADM_AdmDate = CURRENT_DATE
+                AND SUBSTRING(PAADM_ADMNO,0,2) = 'O'
+                AND PAADM_VisitStatus in ('A','D')  
+            ";
+
+            var dic = new Dictionary<string, string> {{"PAPMI_NO", hn}};
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> GetPatientRegisLoc(string hn)
+        {
+            const string result = @"
+            
+                SELECT PAADM_DepCode_DR->CTLOC_Code
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR->PAPMI_No = ?
+                AND PAADM_AdmDate = CURRENT_DATE
+                GROUP BY PAADM_DepCode_DR->CTLOC_Code
+
+            ";
+
+            var dic = new Dictionary<string, string> {{"PAPMI_No", hn}};
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> HnMedDischList(string listHn)
+        {
+            var result = @"
+            
+                SELECT PAADM_PAPMI_DR-> PAPMI_NO
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR-> PAPMI_NO in
+                (
+                    {listHn}
+                )
+                AND PAADM_AdmDate = CURRENT_DATE
+                AND SUBSTRING(PAADM_ADMNO,0,2) = 'O'
+                AND PAADM_VisitStatus in ('A')
+                AND PAADM_MedDischDate is not null
+
+            ";
+
+            result = result.Replace("{listHn}", listHn);
+
+            var dic = new Dictionary<string, string>();
+            //dic.Add("PAPMI_No", listHn);
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> DataAllDischsList(string listHn)
+        {
+            var result = @"
+            
+                SELECT PAADM_PAPMI_DR->PAPMI_NO
+                ,PAADM_ADMNO,PAADM_MedDischDate
+                ,PAADM_MedDischTime,PAADM_FinDischDate
+                ,PAADM_FinDischTime,PAADM_DischgDate
+                ,PAADM_DischgTime
+                FROM PA_ADM
+                WHERE PAADM_PAPMI_DR-> PAPMI_NO  in
+                (
+                    {listHn}
+                )
+                AND PAADM_AdmDate = CURRENT_DATE
+                AND SUBSTRING(PAADM_ADMNO,0,2) = 'O'
+                AND PAADM_VisitStatus in ('A','D')  
+
+            ";
+            result = result.Replace("{listHn}", listHn);
+            var dic = new Dictionary<string, string>();
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+        
+        public static Tuple<string, Dictionary<string, string>> PatientSeeToDoctor(string listHn)
+        {
+            var result = @"
+
+                SELECT APPT_PAPMI_DR->PAPMI_No
+				,APPT_Adm_DR->PAADM_DepCode_DR->CTLOC_Code
+				FROM RB_Appointment
+				where APPT_PAPMI_DR->PAPMI_No in 
+                (
+				    {listHn}
+				)
+				and APPT_Adm_DR->PAADM_AdmDate = CURRENT_DATE
+				and APPT_Status <> 'X'
+				AND APPT_SeenTime is NULL
+
+            ";
+
+            result = result.Replace("{listHn}", listHn);
+            var dic = new Dictionary<string, string>();
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> GetAllPatientBilled(string listHn)
+        {
+            //var result = @"
+
+            //    SELECT ARPBL_PAADM_DR->PAADM_PAPMI_DR->PAPMI_No
+            //    ,ARPBL_PAADM_DR->PAADM_ADMNO
+            //    ,ARPBL_BillNo
+            //    ,ARPBL_DatePrinted
+            //    ,ARPBL_TimePrinted
+            //    FROM AR_PatientBill
+            //    WHERE ARPBL_PAADM_DR->PAADM_PAPMI_DR->PAPMI_No in
+            //    (
+            //     {listHn}
+            //    ) 
+            //    AND ARPBL_PAADM_DR->PAADM_ADMDATE = CURRENT_DATE 
+
+            //";
+            var result = @"
+
+                SELECT ARPBL_PAADM_DR->PAADM_PAPMI_DR->PAPMI_No
+                ,ARPBL_PAADM_DR->PAADM_ADMNO
+                ,ARPBL_BillNo
+                ,ARPBL_DatePrinted
+                ,ARPBL_TimePrinted,*
+                FROM AR_PatientBill
+                WHERE ARPBL_PAADM_DR->PAADM_PAPMI_DR->PAPMI_No in
+                (
+	                {listHn}
+                ) 
+                AND ARPBL_PAADM_DR->PAADM_ADMDATE = CURRENT_DATE 
+                AND (ARPBL_BillNo is not null or (ARPBL_BillNo is null and ((ARPBL_TotalPatient +ARPBL_TotalInsCo) > 0)))
+
+            ";
+
+            result = result.Replace("{listHn}", listHn);
+            var dic = new Dictionary<string, string>();
+
+            return new Tuple<string, Dictionary<string, string>>(result, dic);
+        }
+
+        public static Tuple<string, Dictionary<string, string>> GetPharCollect(string listHn)
+        {
+            var result = @"
+                SELECT  OEORI_OEORD_ParRef->OEORD_Adm_DR->PAADM_PAPMI_DR->PAPMI_No
+                ,OEORI_OEORD_ParRef->OEORD_Adm_DR->PAADM_ADMNo
+                ,OEORI_PrescNo ,OEORI_PharmacyStatus ,OEORI_ItemStat_DR
+                FROM OE_OrdItem
+                WHERE OEORI_PRN in 
+                (
+                    {listHn}
+                )
+                AND OEORI_OEORD_ParRef->OEORD_Adm_DR->PAADM_ADMDATE = CURRENT_DATE 
+            ";
+
+            result = result.Replace("{listHn}", listHn);
+
+            return  new Tuple<string, Dictionary<string, string>>(result, new Dictionary<string, string>());
         }
     }
 }

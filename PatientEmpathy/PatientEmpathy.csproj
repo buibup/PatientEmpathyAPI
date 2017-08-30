@@ -24,6 +24,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -130,6 +131,10 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Web.Cors, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Cors.5.2.3\lib\net45\System.Web.Cors.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -139,6 +144,10 @@
     <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.WebPages.3.2.3\lib\net45\System.Web.Helpers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Web.Http.Cors, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Cors.5.2.3\lib\net45\System.Web.Http.Cors.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Http.Owin, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Owin.5.2.3\lib\net45\System.Web.Http.Owin.dll</HintPath>
@@ -219,6 +228,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Common\Constants.cs" />
+    <Compile Include="Common\Extension.cs" />
     <Compile Include="Common\GetData.cs" />
     <Compile Include="Common\Helper.cs" />
     <Compile Include="Common\HelperFunctions.cs" />
@@ -238,13 +248,22 @@
     <Compile Include="Models\AlertMsg.cs" />
     <Compile Include="Models\Allergy.cs" />
     <Compile Include="Models\Appointment.cs" />
+    <Compile Include="Models\BeaconLocation.cs" />
     <Compile Include="Models\CRM.cs" />
+    <Compile Include="Models\Discharges.cs" />
+    <Compile Include="Models\Dischg.cs" />
     <Compile Include="Models\Episode.cs" />
     <Compile Include="Models\EpisodeInquiry.cs" />
+    <Compile Include="Models\FinDisch.cs" />
     <Compile Include="Models\ICD10.cs" />
     <Compile Include="Models\ICD9.cs" />
     <Compile Include="Models\IdentityModels.cs" />
+    <Compile Include="Models\MedDisch.cs" />
+    <Compile Include="Models\PatientBilled.cs" />
     <Compile Include="Models\PatientCategory.cs" />
+    <Compile Include="Models\PatientDischarges.cs" />
+    <Compile Include="Models\PatientRegisLoc.cs" />
+    <Compile Include="Models\PharCollect.cs" />
     <Compile Include="Models\Ward.cs" />
     <Compile Include="Models\Room.cs" />
     <Compile Include="Models\Location.cs" />
@@ -287,6 +306,7 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\CollectionModelDescription.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
+    <None Include="Properties\PublishProfiles\CustomProfile.pubxml" />
     <None Include="Properties\PublishProfiles\Empathy.pubxml" />
     <None Include="Properties\PublishProfiles\FolderProfile.pubxml" />
     <None Include="Properties\PublishProfiles\PatientEmpathy.pubxml" />
@@ -302,7 +322,9 @@
     <Content Include="Scripts\modernizr-2.6.2.js" />
     <Content Include="Scripts\respond.js" />
     <Content Include="Scripts\respond.min.js" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -343,7 +365,7 @@
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
         <WebProjectProperties>
-          <UseIIS>True</UseIIS>
+          <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>52891</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>

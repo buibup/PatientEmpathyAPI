@@ -1,9 +1,6 @@
 ﻿using PatientEmpathy.Models;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
-using System.Web;
 
 namespace PatientEmpathy.Repository
 {
@@ -12,18 +9,34 @@ namespace PatientEmpathy.Repository
         bool IsPatientDischarge(string epiNo);
         EpisodeInquiry GetEpisodeInquiry(string hn);
         PatientInfo GetPatientInfo(string hn);
-        PatientInfo GetPatientInfoPOST(string hn);
+        PatientInfo GetPatientInfoPost(string hn);
         PatientInfo GetPatientInfoByEpiNo(string epiNo);
-        PatientHN GetPatientHN(string epiNo);
+        PatientHN GetPatientHn(string epiNo);
         List<PatientLab> GetPatientLab(string epiNo);
         List<Patient> GetPatient(string date);
         List<Patient> GetPatient(string date, string locCode);
-        List<Patient> GetPatientByHN(string hn);
+        List<Patient> GetPatientByHn(string hn);
         List<Location> GetLocation(string site);
-        List<Room> GetRoom(string buId,string Ward);
+        List<Room> GetRoom(string buId,string ward);
         List<Ward> GetWard(string buId);
         HttpResponseMessage GetPatientImage(string hn);
         HttpResponseMessage GetPatientImage(string hn, int width, int height);
         string GetLocationByLineBeacon(string beaconId);
+        BeaconLocation GetBeaconLocation(string beaconId);
+        List<MedDisch> GetMedDisch(string hn);
+        List<FinDisch> GetFinDisc(string hn);
+        List<Dischg> GetDischgs(string hn);
+        Discharges GetDischarges(string hn);
+        bool UpdateMedDisch();
+        bool UpdateFinDisc();
+        bool UpdateDischarge();
+        bool UpdateAllDisch();
+        bool UpdatePromptPay(string hn, string message);
+        bool UpdateRegisLoc(string hn);
+        List<Location> GetLocation(string site, string type);
+        bool UpdateNewRegis(string hn, string loc);
+        bool UpdateSeeToDoctor();
+        bool UpdatePatientBilled();
+        bool UpdatePharCollect();
     }
 }

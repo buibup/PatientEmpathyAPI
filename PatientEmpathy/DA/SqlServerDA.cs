@@ -1,17 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Web;
 
-namespace CRMWebApi.DA
+namespace PatientEmpathy.DA
 {
-    public class SqlServerDA
+    public class SqlServerDa
     {
         public static DataTable DataTableBindDataCommand(string cmdString, string conString)
         {
-            DataTable dt = new DataTable();
+            var dt = new DataTable();
 
             using (var con = new SqlConnection(conString))
             {
@@ -27,7 +24,7 @@ namespace CRMWebApi.DA
 
         public static DataSet DataSetBindDataCommand(string cmdString, string conString)
         {
-            DataSet ds = new DataSet();
+            var ds = new DataSet();
 
             using (var con = new SqlConnection(conString))
             {
@@ -42,7 +39,7 @@ namespace CRMWebApi.DA
 
         public static string ExecuteScalarBindDataCommand(string cmdString, string conString)
         {
-            string result = "";
+            var result = "";
 
             using (var con = new SqlConnection(conString))
             {
