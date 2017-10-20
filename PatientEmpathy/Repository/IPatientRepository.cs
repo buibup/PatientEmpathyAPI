@@ -1,4 +1,5 @@
 ﻿using PatientEmpathy.Models;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 
@@ -21,6 +22,9 @@ namespace PatientEmpathy.Repository
         List<Ward> GetWard(string buId);
         HttpResponseMessage GetPatientImage(string hn);
         HttpResponseMessage GetPatientImage(string hn, int width, int height);
+        HttpResponseMessage GetImageLineByUserId(string userId, int width, int height);
+        HttpResponseMessage GetPatientImagePostgres(string hn);
+        HttpResponseMessage GetPatientImagePostgres(string hn, int width, int height);
         string GetLocationByLineBeacon(string beaconId);
         BeaconLocation GetBeaconLocation(string beaconId);
         List<MedDisch> GetMedDisch(string hn);
@@ -30,13 +34,17 @@ namespace PatientEmpathy.Repository
         bool UpdateMedDisch();
         bool UpdateFinDisc();
         bool UpdateDischarge();
-        bool UpdateAllDisch();
+        Tuple<bool, List<PatientDischarges>> UpdateAllDisch();
         bool UpdatePromptPay(string hn, string message);
-        bool UpdateRegisLoc(string hn);
+        Tuple<bool, string> UpdateRegisLoc(string hn);
         List<Location> GetLocation(string site, string type);
         bool UpdateNewRegis(string hn, string loc);
         bool UpdateSeeToDoctor();
-        bool UpdatePatientBilled();
-        bool UpdatePharCollect();
+        Tuple<bool, List<PatientBilled>> UpdatePatientBilled();
+        Tuple<bool, List<PharCollect>> UpdatePharCollect();
+        List<string> GetPatientAdmissionByTime(double minute);
+        Tuple<int, List<PatientInfo>> GetPatientOPDCurrent(double minute);
+        Tuple<int, List<PatientInfo>> GetPatientOPDCurrentRest(double minute);
+        void RemoveAllIdleConnections();
     }
 }

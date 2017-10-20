@@ -1,5 +1,6 @@
 ﻿using PatientEmpathy.Models;
 using PatientEmpathy.Repository;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Web.Http;
@@ -9,6 +10,7 @@ namespace PatientEmpathy.Controllers
     public class PatientController : ApiController
     {
         private IPatientRepository _patientRepository;
+
         public PatientController()
         {
             _patientRepository = new PatientRepository();
@@ -81,17 +83,20 @@ namespace PatientEmpathy.Controllers
             _patientRepository = new PatientRepository();
             return _patientRepository.GetLocation(site);
         }
+
         [HttpGet]
-        public List<Room> GetRoom(string buId,string Ward)
+        public List<Room> GetRoom(string buId, string Ward)
         {
             _patientRepository = new PatientRepository();
-            return _patientRepository.GetRoom(buId,Ward);
+            return _patientRepository.GetRoom(buId, Ward);
         }
+
         public List<Ward> GetWard(string buId)
         {
             _patientRepository = new PatientRepository();
             return _patientRepository.GetWard(buId);
         }
+
         [HttpGet]
         public HttpResponseMessage GetPatientImage(string hn)
         {
@@ -104,6 +109,25 @@ namespace PatientEmpathy.Controllers
         {
             _patientRepository = new PatientRepository();
             return _patientRepository.GetPatientImage(hn, width, height);
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetImageLineByUserId(string userId, int width, int height)
+        {
+            _patientRepository = new PatientRepository();
+            return _patientRepository.GetImageLineByUserId(userId, width, height);
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetPatientImagePostgres(string hn)
+        {
+            return _patientRepository.GetPatientImagePostgres(hn);
+        }
+
+        [HttpGet]
+        public HttpResponseMessage GetPatientImagePostgres(string hn, int width, int height)
+        {
+            return _patientRepository.GetPatientImagePostgres(hn, width, height);
         }
 
         [HttpPost]
@@ -123,15 +147,19 @@ namespace PatientEmpathy.Controllers
         {
             return _patientRepository.GetDischarges(hn);
         }
-        public bool UpdateAllDisch()
+
+        [HttpPost]
+        public Tuple<bool, List<PatientDischarges>> UpdateAllDisch()
         {
             return _patientRepository.UpdateAllDisch();
         }
+
         public bool UpdatePromptPay(string hn, string message)
         {
             return _patientRepository.UpdatePromptPay(hn, message);
         }
-        public bool UpdateRegisLoc(string hn)
+
+        public Tuple<bool, string> UpdateRegisLoc(string hn)
         {
             return _patientRepository.UpdateRegisLoc(hn);
         }
@@ -147,7 +175,8 @@ namespace PatientEmpathy.Controllers
             return _patientRepository.UpdateNewRegis(hn, loc);
         }
 
-        public bool UpdatePatientBilled()
+        [HttpPost]
+        public Tuple<bool, List<PatientBilled>> UpdatePatientBilled()
         {
             return _patientRepository.UpdatePatientBilled();
         }
@@ -159,9 +188,33 @@ namespace PatientEmpathy.Controllers
         }
 
         [HttpPost]
-        public bool UpdatePharCollect()
+        public Tuple<bool, List<PharCollect>> UpdatePharCollect()
         {
             return _patientRepository.UpdatePharCollect();
+        }
+
+        [HttpPost]
+        public List<string> GetPatientAdmissionByTime(double minute)
+        {
+            return _patientRepository.GetPatientAdmissionByTime(minute);
+        }
+
+        [HttpPost]
+        public Tuple<int, List<PatientInfo>> GetPatientOPDCurrent(double minute)
+        {
+            return _patientRepository.GetPatientOPDCurrent(minute);
+        }
+
+        [HttpPost]
+        public Tuple<int, List<PatientInfo>> GetPatientOPDCurrentRest(double minute)
+        {
+            return _patientRepository.GetPatientOPDCurrentRest(minute);
+        }
+
+        [HttpPost]
+        public void RemoveAllIdleConnections()
+        {
+            _patientRepository.RemoveAllIdleConnections();
         }
     }
 }

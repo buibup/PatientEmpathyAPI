@@ -7,6 +7,7 @@ namespace PatientEmpathy.Models
         public string PAPMI_No { get; set; }
         public List<EpiPharCollect> EpiPharCollectList { get; set; }
         public bool HnCollect { get; set; }
+        public string LastCollectDateTime { get; set; }
     }
 
     public class EpiPharCollect
@@ -21,6 +22,6 @@ namespace PatientEmpathy.Models
     {
         public string OEORI_PrescNo { get; set; }
         public bool PharPrescNoCollect { get; set; }
-
+        public string OEORI_UpdateDateTime { get; set; }
     }
 }

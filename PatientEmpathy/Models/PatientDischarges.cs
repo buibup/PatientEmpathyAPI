@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace PatientEmpathy.Models
 {
@@ -16,7 +17,10 @@ namespace PatientEmpathy.Models
     {
         public string PAADM_ADMNo { get; set; }
         public bool IsMedDisch { get; set; }
+        public string PAADM_MedDischDateTime { get; set; }
         public bool IsFinDisch { get; set; }
+        public string PAADM_FinDischDateTime { get; set; }
         public bool IsDischg { get; set; }
+        public string PAADM_DischgDateTime { get; set; }
     }
 }

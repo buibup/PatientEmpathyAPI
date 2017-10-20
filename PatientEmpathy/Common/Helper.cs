@@ -12,26 +12,30 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.RegularExpressions;
+using InterSystems.Data.CacheClient;
 using PatientEmpathy.DA;
 using static System.Convert;
 using DBNull = System.DBNull;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace PatientEmpathy.Common
 {
     public static class Helper
     {
         private static readonly string ConStr = Constants.Cache89;
-        public static Episode DataTableToEpisode(DataTable dtEpiIn)
+        public static Episode DataTableToEpisode(DataTable dtEpiIn, CacheConnection con)
         {
             var epi = new Episode();
             var epiInqList = new List<EpisodeInquiry>();
 
             foreach (DataRow row in dtEpiIn.Rows)
             {
+                var PAADM_ADMNo = row["PAADM_ADMNo"].ToString();
                 var epiInq = new EpisodeInquiry()
                 {
-                    PAADM_ADMNo = row["PAADM_ADMNo"].ToString(),
+                    PAADM_ADMNo = PAADM_ADMNo,
                     PAADM_AdmDate = ConvertDate(row["PAADM_AdmDate"].ToString()),
                     PAADM_AdmTime = ToDateTime(row["PAADM_AdmTime"].ToString()).ToString("HH:mm"),
                     CTLOC_Code = row["CTLOC_Code"].ToString(),
@@ -44,11 +48,14 @@ namespace PatientEmpathy.Common
                     WARD_Desc = row["WARD_Desc"].ToString(),
                     ROOM_Code = row["ROOM_Code"].ToString()
                 };
-                var dtIcd10 = InterSystemsDa.DtBindDataCommand(QueryString.GetIcd10(epiInq.PAADM_ADMNo), ConStr);
-                var dtIcd9 = InterSystemsDa.DtBindDataCommand(QueryString.GetIcd9(epiInq.PAADM_ADMNo), ConStr);
+                var dtIcd10 = InterSystemsDa.DtBindDataCommand(QueryString.GetIcd10(epiInq.PAADM_ADMNo), con);
+                var dtIcd9 = InterSystemsDa.DtBindDataCommand(QueryString.GetIcd9(epiInq.PAADM_ADMNo), con);
+
+
 
                 epiInq.ICD10 = DataTableToIcd10(dtIcd10);
                 epiInq.ICD9 = DataTableToIcd9(dtIcd9);
+                epiInq.AppConsults = InterSystemsDa.GetApptConsult(PAADM_ADMNo, con);
 
                 epiInqList.Add(epiInq);
             }
@@ -90,7 +97,7 @@ namespace PatientEmpathy.Common
             return icd9List;
         }
 
-        public static List<Allergy> DataTableToAllergy(DataTable dt)
+        public static List<Allergy> DataTableToAllergy(DataTable dt, CacheConnection con)
         {
             var algs = new List<Allergy>();
 
@@ -102,42 +109,42 @@ namespace PatientEmpathy.Common
                 {
                     algName = row["ALG_Comments"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
                 else if (!string.IsNullOrEmpty(row["PHCGE_Name"].ToString()))
                 {
                     algName = row["PHCGE_Name"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
                 else if (!string.IsNullOrEmpty(row["ALG_Desc"].ToString()))
                 {
                     algName = row["ALG_Desc"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
                 else if (!string.IsNullOrEmpty(row["ALGR_Desc"].ToString()))
                 {
                     algName = row["ALGR_Desc"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
                 else if (!string.IsNullOrEmpty(row["PHCD_Name"].ToString()))
                 {
                     algName = row["PHCD_Name"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
                 else if (!string.IsNullOrEmpty(row["INGR_Desc"].ToString()))
                 {
                     algName = row["INGR_Desc"].ToString();
                     alg.Name = algName;
-                    alg.Category = GetData.GetAllergyCategory(algName);
+                    alg.Category = GetData.GetAllergyCategory(algName, con);
                     algs.Add(alg);
                 }
 
@@ -204,14 +211,7 @@ namespace PatientEmpathy.Common
 
             return ms.ToArray();
         }
-
-        public static Image ByteArrayToImage(byte[] byteArrayIn)
-        {
-            var ms = new MemoryStream(byteArrayIn);
-            var returnImage = Image.FromStream(ms);
-
-            return returnImage;
-        }
+        
 
         public static Image ResizeImage(Image image, Size size, bool preserveAspectRatio = true)
         {
@@ -287,10 +287,10 @@ namespace PatientEmpathy.Common
             return response;
         }
 
-        public static HttpResponseMessage DataTableToImage(DataTable dt, int width, int hegiht)
+        public static HttpResponseMessage DataTableToImage(DataTable dt, int width, int height)
         {
             width = (width == 0) ? 100 : width;
-            hegiht = (hegiht == 0) ? 100 : hegiht;
+            height = (height == 0) ? 100 : height;
 
             HttpResponseMessage response;
             if (dt.Rows.Count > 0)
@@ -304,7 +304,7 @@ namespace PatientEmpathy.Common
                 var imgByteOrigin = (byte[])dt.Rows[0][0];
 
                 var imgOrigin = (Bitmap)((new ImageConverter()).ConvertFrom(imgByteOrigin));
-                var imgResize = ResizeImage(imgOrigin, new Size(width, hegiht));
+                var imgResize = ResizeImage(imgOrigin, new Size(width, height));
                 var imgBytenewsize = ImageToByteArray(imgResize);
                 var ms = new MemoryStream(imgBytenewsize);
 
@@ -321,6 +321,114 @@ namespace PatientEmpathy.Common
             }
 
             return response;
+        }
+
+        public static HttpResponseMessage ByteArrayToImage(byte[] data, int width, int height)
+        {
+            width = (width == 0) ? 100 : width;
+            height = (height == 0) ? 100 : height;
+
+            HttpResponseMessage response;
+            if (data == null)
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+            else
+            {
+                try
+                {
+
+                    var imgOrigin = (Bitmap)((new ImageConverter()).ConvertFrom(data));
+                    var imgResize = ResizeImage(imgOrigin, new Size(width, height));
+                    var imgBytenewsize = ImageToByteArray(imgResize);
+                    var ms = new MemoryStream(imgBytenewsize);
+
+                    response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StreamContent(ms)
+                    };
+                    response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+                    return response;
+                }
+                catch (Exception)
+                {
+
+                }
+
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
+        public static HttpResponseMessage ObjectToImage(object obj, int width, int height)
+        {
+
+            width = (width == 0) ? 100 : width;
+            height = (height == 0) ? 100 : height;
+
+            HttpResponseMessage response;
+            if (obj == null)
+            {
+                return new HttpResponseMessage(HttpStatusCode.NotFound);
+            }
+            else
+            {
+                try
+                {
+                    //var imgByteOrigin = (byte[])obj;
+
+                    var imgOrigin = (Bitmap)((new ImageConverter()).ConvertFrom(obj));
+                    var imgResize = ResizeImage(imgOrigin, new Size(width, height));
+                    var imgBytenewsize = ImageToByteArray(imgResize);
+                    var ms = new MemoryStream(imgBytenewsize);
+
+                    response = new HttpResponseMessage(HttpStatusCode.OK)
+                    {
+                        Content = new StreamContent(ms)
+                    };
+                    response.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+
+                    return response;
+                }
+                catch (Exception ex)
+                {
+
+                }
+ 
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        }
+
+        public static string DataTableToBase64(DataTable dt, int width, int hegiht)
+        {
+            width = (width == 0) ? 100 : width;
+            hegiht = (hegiht == 0) ? 100 : hegiht;
+
+            string result;
+            if (dt.Rows.Count > 0)
+            {
+                if (string.IsNullOrEmpty(dt.Rows[0][0].ToString()))
+                {
+                    //response = NotfoundImage(width, hegiht);
+                    result = string.Empty;
+                    return result;
+                }
+                var imgByteOrigin = (byte[])dt.Rows[0][0];
+
+                var imgOrigin = (Bitmap)((new ImageConverter()).ConvertFrom(imgByteOrigin));
+                var imgResize = ResizeImage(imgOrigin, new Size(width, hegiht));
+                var imgBytenewsize = ImageToByteArray(imgResize);
+                result = Convert.ToBase64String(imgBytenewsize);
+            }
+            else
+            {
+                //response = NotfoundImage(width, hegiht);
+                result = string.Empty;
+            }
+
+            return result;
         }
 
         public static bool CheckPatientImage(DataTable dt)
@@ -363,6 +471,26 @@ namespace PatientEmpathy.Common
                 convertDate = string.Empty;
             }
             return convertDate;
+        }
+
+        public static string ConvertToISO_8601(string date, string time)
+        {
+            if (string.IsNullOrEmpty(date)) return "";
+
+            var dt = new DateTime();
+            try
+            {
+                var dte = ConvertToDateTime(date);
+                var tme = TimeSpan.Parse(time);
+
+                dt = dte.Date.Add(tme);
+            }
+            catch (Exception)
+            {
+                return date;
+            }
+
+            return dt.ToString("O");
         }
 
         public static string ConvertTime(string paramTime)
@@ -548,12 +676,19 @@ namespace PatientEmpathy.Common
                     flagDischg = flagDischg || isDischg;
                     flagMedDischAll = flagMedDischAll && isMedDisch;
 
+                    var medDatetime = string.IsNullOrEmpty(rowHn["PAADM_MedDischDate"].ToString()) ? new Tuple<string, string>("", "") : new Tuple<string, string>(rowHn["PAADM_MedDischDate"].ToString(), rowHn["PAADM_MedDischTime"].ToString());
+                    var finDatetime = string.IsNullOrEmpty(rowHn["PAADM_FinDischDate"].ToString()) ? new Tuple<string, string>("", "") : new Tuple<string, string>(rowHn["PAADM_FinDischDate"].ToString(), rowHn["PAADM_FinDischTime"].ToString());
+                    var dischgDatetime = string.IsNullOrEmpty(rowHn["PAADM_DischgDate"].ToString()) ? new Tuple<string, string>("", "") : new Tuple<string, string>(rowHn["PAADM_DischgDate"].ToString(), rowHn["PAADM_DischgTime"].ToString());
+
                     var epiDischs = new EPIAllDisch()
                     {
                         PAADM_ADMNo = rowHn["PAADM_ADMNO"].ToString(),
                         IsMedDisch = isMedDisch,
+                        PAADM_MedDischDateTime = ConvertToISO_8601(medDatetime.Item1, medDatetime.Item2),
                         IsFinDisch = isFinDisch,
-                        IsDischg = isDischg
+                        PAADM_FinDischDateTime = ConvertToISO_8601(finDatetime.Item1, finDatetime.Item2),
+                        IsDischg = isDischg,
+                        PAADM_DischgDateTime = ConvertToISO_8601(dischgDatetime.Item1, dischgDatetime.Item2)
                     };
                     epiAllDischList.Add(epiDischs);
                 }
@@ -605,6 +740,8 @@ namespace PatientEmpathy.Common
                 var listEpiBilled = new List<EpiBilled>();
                 var hn = row["PAPMI_No"].ToString();
 
+                var lastDateTimePrinted = DateTime.MinValue.ToString("O");
+
                 #region test
                 //if (hn == "11-00-023472")
                 //{
@@ -641,11 +778,20 @@ namespace PatientEmpathy.Common
                         isBilledEpi = isBilledEpi && isBilled;
                         flagBilled = flagBilled && isBilled;
 
+                        var tupleDatetimePrinted = string.IsNullOrEmpty(rowEpi["ARPBL_DatePrinted"].ToString()) ? new Tuple<string, string>("", "") : new Tuple<string, string>(rowEpi["ARPBL_DatePrinted"].ToString(), rowEpi["ARPBL_TimePrinted"].ToString());
+                        var datetimePrinted = string.IsNullOrEmpty(tupleDatetimePrinted.Item1) ? DateTime.MinValue.ToString("O") : ConvertToISO_8601(tupleDatetimePrinted.Item1, tupleDatetimePrinted.Item2);
+
+                        if (DateTime.Parse(datetimePrinted) > DateTime.Parse(lastDateTimePrinted))
+                        {
+                            lastDateTimePrinted = datetimePrinted;
+                        }
+
                         var billed = new Billed()
                         {
                             ARPBL_BillNo = rowEpi["ARPBL_BillNo"].ToString(),
-                            ARPBL_DatePrinted = string.IsNullOrEmpty(rowEpi["ARPBL_DatePrinted"].ToString()) ? "" : ConvertDate(rowEpi["ARPBL_DatePrinted"].ToString()),
-                            ARPBL_TimePrinted = string.IsNullOrEmpty(ConvertTime(rowEpi["ARPBL_TimePrinted"].ToString())) ? "" : ConvertTime(rowEpi["ARPBL_TimePrinted"].ToString())
+                            ARPBL_DatePrinted = ConvertDate(tupleDatetimePrinted.Item1),
+                            ARPBL_TimePrinted = ConvertTime(tupleDatetimePrinted.Item2),
+                            ARPBL_DateTimePrinted = datetimePrinted == DateTime.MinValue.ToString("O") ? "" : datetimePrinted
                         };
                         lstBilled.Add(billed);
                     }
@@ -662,7 +808,8 @@ namespace PatientEmpathy.Common
                 {
                     PAPMI_No = row["PAPMI_No"].ToString(),
                     ListEpiBilled = listEpiBilled,
-                    FlagBilled = flagBilled
+                    FlagBilled = flagBilled,
+                    LastDateTimePrinted = lastDateTimePrinted == DateTime.MinValue.ToString("O") ? "" : lastDateTimePrinted
                 };
                 listPatientBilled.Add(patientBilled);
             }
@@ -672,26 +819,63 @@ namespace PatientEmpathy.Common
 
         public static List<PharCollect> DtToPatientPharCollectList(DataTable dt)
         {
+            #region OrderStatus
+            /**
+             * select * from OEC_OrderStatus
+             */
+            #endregion
+
             var pharCollectList = new List<PharCollect>();
             foreach (DataRow row in dt.Rows)
             {
+
                 var pharCollect = new PharCollect();
                 var epiPharCollectList = new List<EpiPharCollect>();
                 var hn = row["PAPMI_No"].ToString();
+                var lastCollectDateTime = DateTime.MinValue.ToString("O");
 
                 // find data from list by hn
                 var data = pharCollectList.Find(h => h.PAPMI_No == hn);
                 if (data != null) continue;
                 var hnCollect = true;
 
-                // find hn from datable
-                var drHn = dt.Select($"PAPMI_NO = '{hn}'");
+                #region test
+                //if (hn == "11-09-043707")
+                //{
+                //    hn = "11-09-043707";
+                //}
+                #endregion
+
+                // find hn from datatable
+                IEnumerable<DataRow> drHn;
+
+                try
+                {
+                    //1,6,10
+                    drHn = dt.Rows.Cast<DataRow>()
+                    .Where(x => x.Field<string>("PAPMI_NO") == hn
+                    && !string.IsNullOrEmpty(x.Field<string>("OEORI_PrescNo"))
+                    && ( x.Field<int>("OEORI_ItemStat_DR") == 1 || x.Field<int>("OEORI_ItemStat_DR") == 6 || x.Field<int>("OEORI_ItemStat_DR") == 10)
+                    );
+                }
+                catch (Exception)
+                {
+
+                    drHn = dt.Select($"PAPMI_NO = '{hn}'");
+                }
+
+                if (!drHn.Any())
+                {
+                    hnCollect = false;
+                }
 
                 // เอาข้อมูลใส่ List EpiPharCollect
                 foreach (var rowHn in drHn)
                 {
+
                     var epiPharCollect = new EpiPharCollect();
                     var pharPrescNoList = new List<PharPrescNo>();
+
                     var epi = rowHn["PAADM_ADMNO"].ToString();
                     var epiCollect = true;
 
@@ -732,27 +916,49 @@ namespace PatientEmpathy.Common
                     foreach (DataRow rowEpi in dtEpi.Rows)
                     {
                         var pharPrescNoCollect = true;
-                        var collect = !string.IsNullOrEmpty(rowEpi["OEORI_PrescNo"].ToString()) && rowEpi["OEORI_PharmacyStatus"].ToString() == "A";
+                        int.TryParse(rowEpi["OEORI_ItemStat_DR"].ToString(), out int ItemStat_DR_EPI);
+                        var collect = !string.IsNullOrEmpty(rowEpi["OEORI_PrescNo"].ToString()) && (rowEpi["OEORI_PharmacyStatus"].ToString() == "A" || ItemStat_DR_EPI == 6);
                         epiCollect = epiCollect && collect;
                         hnCollect = hnCollect && epiCollect;
 
                         var prescNo = rowEpi["OEORI_PrescNo"].ToString();
 
                         var drPrescNo = drHn.AsEnumerable()
-                            .Where(d => d.Field<string>("OEORI_PrescNo") == prescNo);
+                            .Where(d => d.Field<string>("OEORI_PrescNo") == prescNo)
+                            .Where(d => d.Field<int>("OEORI_ItemStat_DR") != 4);
 
-                        foreach (var rowPrescNo in drPrescNo)
-                        {
-                            pharPrescNoCollect = pharPrescNoCollect && rowPrescNo["OEORI_PharmacyStatus"].ToString() == "A";
-                        }
 
                         var findprescNo = pharPrescNoList.Find(p => p.OEORI_PrescNo == prescNo);
                         if (findprescNo != null) continue;
 
+                        var lastPrescNoUpdate = DateTime.MinValue.ToString("O");
+
+                        foreach (var rowPrescNo in drPrescNo)
+                        {
+                            var tuplePrescNoUpdate = string.IsNullOrEmpty(rowPrescNo["OEORI_UpdateDate"].ToString()) ? new Tuple<string, string>("", "") : new Tuple<string, string>(rowPrescNo["OEORI_UpdateDate"].ToString(), rowPrescNo["OEORI_UpdateTime"].ToString());
+                            var prescNoUpdate = ConvertToISO_8601(tuplePrescNoUpdate.Item1, tuplePrescNoUpdate.Item2);
+
+                            if (DateTime.Parse(prescNoUpdate) > DateTime.Parse(lastPrescNoUpdate))
+                            {
+                                // update last prescno
+                                lastPrescNoUpdate = prescNoUpdate;
+
+
+                                if (DateTime.Parse(lastPrescNoUpdate) > DateTime.Parse(lastCollectDateTime))
+                                {
+                                    // update last collect
+                                    lastCollectDateTime = lastPrescNoUpdate;
+                                }
+                            }
+                            int.TryParse(rowPrescNo["OEORI_ItemStat_DR"].ToString(), out int ItemStat_DR_PrescNo);
+                            pharPrescNoCollect = pharPrescNoCollect && (rowPrescNo["OEORI_PharmacyStatus"].ToString() == "A" || ItemStat_DR_PrescNo == 6);
+                        }
+
                         var pharPrescNo = new PharPrescNo()
                         {
-                            OEORI_PrescNo = rowEpi["OEORI_PrescNo"].ToString(),
-                            PharPrescNoCollect = pharPrescNoCollect
+                            OEORI_PrescNo = prescNo,
+                            PharPrescNoCollect = pharPrescNoCollect,
+                            OEORI_UpdateDateTime = lastPrescNoUpdate
                         };
                         pharPrescNoList.Add(pharPrescNo);
                     }
@@ -773,6 +979,7 @@ namespace PatientEmpathy.Common
                 pharCollect.PAPMI_No = hn;
                 pharCollect.EpiPharCollectList = epiPharCollectList;
                 pharCollect.HnCollect = hnCollect;
+                pharCollect.LastCollectDateTime = lastCollectDateTime;
                 pharCollectList.Add(pharCollect);
             }
 
@@ -790,21 +997,14 @@ namespace PatientEmpathy.Common
 
         public static DataTable DataTableClearNull(DataTable dt, string fieldName)
         {
-            var dataRow = dt.AsEnumerable()
-            .Where(d => d.Field<string>(fieldName) != null)
-            .FirstOrDefault();
+            var dataRow = dt
+            .AsEnumerable()
+            .FirstOrDefault(d => d.Field<string>(fieldName) != null);
 
             var rows = dt.AsEnumerable()
                 .Where(d => d.Field<string>(fieldName) != null);
 
-            if (dataRow != null)
-            {
-                return rows.CopyToDataTable();
-            }
-            else
-            {
-                return new DataTable();
-            }
+            return dataRow != null ? rows.CopyToDataTable() : new DataTable();
         }
 
         public static bool IsAny<T>(this IEnumerable<T> data)

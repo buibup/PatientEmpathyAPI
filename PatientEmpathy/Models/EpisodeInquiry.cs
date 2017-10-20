@@ -18,5 +18,6 @@ namespace PatientEmpathy.Models
         public string ROOM_Code { get; set; }
         public List<ICD10> ICD10 { get; set; }
         public List<ICD9> ICD9 { get; set; }
+        public List<Appointment> AppConsults { get; set; }
     }
 }

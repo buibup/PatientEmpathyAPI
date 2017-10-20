@@ -16,6 +16,7 @@ namespace PatientEmpathy.Models
         public string Address { get; set; }
         public string PAPER_TelH { get; set; }
         public bool IsImage { get; set; }
+        //public PatientImage PatientImage { get; set; }
         public PatientCategory PatientCategory { get; set; }
         public IEnumerable<AlertMsg> AlertMsgs { get; set; }
         public Episode Episode { get; set; }
@@ -23,5 +24,10 @@ namespace PatientEmpathy.Models
         public List<Allergy> Allergys { get; set; }
         public List<CRM> CRMs { get; set; }
 
+    }
+
+    public class PatientImage
+    {
+        public string Image { get; set; }
     }
 }

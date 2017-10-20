@@ -4,7 +4,6 @@ using PatientEmpathy.Common;
 using PatientEmpathy.Models;
 using System.Collections.Generic;
 using System.Web;
-using System.Data;
 using System.Text.RegularExpressions;
 using Npgsql;
 using System.Net.Http;
@@ -12,75 +11,119 @@ using System.Linq;
 using PatientEmpathy.DA;
 using Newtonsoft.Json;
 using static System.String;
+using System.Net;
+using log4net;
 
 namespace PatientEmpathy.Repository
 {
     public class PatientRepository : IPatientRepository
     {
-        private readonly string _cache89ConString = Constants.Cache89;
+        private static readonly ILog _log = GlobalConfig.GetLogManager(typeof(PatientRepository));
+
+        public PatientRepository()
+        {
+            GlobalConfig.SetLogAppName();
+        }
+
+        /// <summary>
+        /// Get EpisodeInquiry from trakcare
+        /// </summary>
+        /// <param name="hn"></param>
+        /// <returns>EpisodeInquiry Model</returns>
         public EpisodeInquiry GetEpisodeInquiry(string hn)
         {
             EpisodeInquiry epiInq = null;
 
-            using (var con = new CacheConnection(_cache89ConString))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetEpisodeInquiry(hn), con))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetEpisodeInquiry(hn), con))
                     {
-                        if (reader.Read())
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            epiInq = new EpisodeInquiry()
+                            if (reader.Read())
                             {
-                                PAADM_ADMNo = reader["PAADM_ADMNo"].ToString(),
-                                PAADM_AdmDate = Helper.ConvertDate(reader["PAADM_AdmDate"].ToString()),
-                                PAADM_AdmTime = Convert.ToDateTime(reader["PAADM_AdmTime"].ToString()).ToString("HH:mm"),
-                                CTLOC_Code = reader["CTLOC_Code"].ToString(),
-                                CTLOC_Desc = reader["CTLOC_Desc"].ToString(),
-                                CTPCP_Code = reader["CTPCP_Code"].ToString(),
-                                CTPCP_Desc = reader["CTPCP_Desc"].ToString(),
-                                PAADM_Type = reader["PAADM_Type"].ToString(),
-                                PAADM_VisitStatus = reader["PAADM_VisitStatus"].ToString(),
-                                WARD_Code = reader["WARD_Code"].ToString(),
-                                WARD_Desc = reader["WARD_Desc"].ToString(),
-                                ROOM_Code = reader["ROOM_Code"].ToString()
-                            };
+                                epiInq = new EpisodeInquiry()
+                                {
+                                    PAADM_ADMNo = reader["PAADM_ADMNo"].ToString(),
+                                    PAADM_AdmDate = Helper.ConvertDate(reader["PAADM_AdmDate"].ToString()),
+                                    PAADM_AdmTime = Convert.ToDateTime(reader["PAADM_AdmTime"].ToString()).ToString("HH:mm"),
+                                    CTLOC_Code = reader["CTLOC_Code"].ToString(),
+                                    CTLOC_Desc = reader["CTLOC_Desc"].ToString(),
+                                    CTPCP_Code = reader["CTPCP_Code"].ToString(),
+                                    CTPCP_Desc = reader["CTPCP_Desc"].ToString(),
+                                    PAADM_Type = reader["PAADM_Type"].ToString(),
+                                    PAADM_VisitStatus = reader["PAADM_VisitStatus"].ToString(),
+                                    WARD_Code = reader["WARD_Code"].ToString(),
+                                    WARD_Desc = reader["WARD_Desc"].ToString(),
+                                    ROOM_Code = reader["ROOM_Code"].ToString()
+                                };
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
             return epiInq;
         }
 
+        /// <summary>
+        /// Get locaction from trakcare
+        /// </summary>
+        /// <param name="site"></param>
+        /// <returns>Location listt</returns>
         public List<Location> GetLocation(string site)
         {
             var locations = new List<Location>();
             var query = QueryString.GetLocation(site);
 
-            using (var con = new CacheConnection(_cache89ConString))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(query.Item1, con))
+                try
                 {
-                    foreach (var pair in query.Item2)
+                    con.Open();
+                    using (var cmd = new CacheCommand(query.Item1, con))
                     {
-                        var key = pair.Key;
-                        cmd.AddInputParameters(new { key = pair.Value });
-                    }
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        foreach (var pair in query.Item2)
                         {
-                            var loc = new Location()
+                            var key = pair.Key;
+                            cmd.AddInputParameters(new { key = pair.Value });
+                        }
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                CTLOC_Code = reader["CTLOC_Code"].ToString(),
-                                CTLOC_Desc = reader["CTLOC_Desc"].ToString()
-                            };
-                            locations.Add(loc);
+                                var loc = new Location()
+                                {
+                                    CTLOC_Code = reader["CTLOC_Code"].ToString(),
+                                    CTLOC_Desc = reader["CTLOC_Desc"].ToString()
+                                };
+                                locations.Add(loc);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -92,28 +135,49 @@ namespace PatientEmpathy.Repository
             var locations = new List<Location>();
             var query = QueryString.GetLocation(site, type);
 
-            using (var con = new CacheConnection(_cache89ConString))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(query.Item1, con))
+                try
                 {
-                    foreach (var pair in query.Item2)
+                    con.Open();
+                    using (var cmd = new CacheCommand(query.Item1, con))
                     {
-                        var key = pair.Key;
-                        cmd.AddInputParameters(new { key = pair.Value });
-                    }
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        foreach (var pair in query.Item2)
                         {
-                            var loc = new Location()
+                            var key = pair.Key;
+                            cmd.AddInputParameters(new { key = pair.Value });
+                        }
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                CTLOC_Code = reader["CTLOC_Code"].ToString(),
-                                CTLOC_Desc = reader["CTLOC_Desc"].ToString()
-                            };
-                            locations.Add(loc);
+                                var locDesc = reader["CTLOC_Desc"].ToString();
+                                if (type.ToLower() == "c")
+                                {
+                                    var lastChar = locDesc.Substring(locDesc.Length - 1,1);
+                                    var data = int.TryParse(lastChar, out int temp) ? locDesc.Substring(0, locDesc.Length - 1) : locDesc;
+
+                                    locDesc = data;
+                                }
+                                var loc = new Location()
+                                {
+                                    CTLOC_Code = reader["CTLOC_Code"].ToString(),
+                                    CTLOC_Desc = locDesc
+                                };
+                                locations.Add(loc);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -124,24 +188,37 @@ namespace PatientEmpathy.Repository
         {
             var rooms = new List<Room>();
 
-            using (var con = new CacheConnection(_cache89ConString))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetRoom(buId, ward), con))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetRoom(buId, ward), con))
                     {
-                        while (reader.Read())
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            var room = new Room()
+                            while (reader.Read())
                             {
-                                WARD_Code = reader["WARD_Code"].ToString(),
-                                ROOM_Code = reader["ROOM_Code"].ToString(),
-                                ROOM_Desc = reader["ROOM_Desc"].ToString()
-                            };
-                            rooms.Add(room);
+                                var room = new Room()
+                                {
+                                    WARD_Code = reader["WARD_Code"].ToString(),
+                                    ROOM_Code = reader["ROOM_Code"].ToString(),
+                                    ROOM_Desc = reader["ROOM_Desc"].ToString()
+                                };
+                                rooms.Add(room);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -151,23 +228,36 @@ namespace PatientEmpathy.Repository
         {
             var wards = new List<Ward>();
 
-            using (var con = new CacheConnection(_cache89ConString))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetWard(buId), con))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetWard(buId), con))
                     {
-                        while (reader.Read())
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            var ward = new Ward()
+                            while (reader.Read())
                             {
-                                WARD_Code = reader["WARD_Code"].ToString(),
-                                WARD_Desc = reader["WARD_Desc"].ToString()
-                            };
-                            wards.Add(ward);
+                                var ward = new Ward()
+                                {
+                                    WARD_Code = reader["WARD_Code"].ToString(),
+                                    WARD_Desc = reader["WARD_Desc"].ToString()
+                                };
+                                wards.Add(ward);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -270,18 +360,31 @@ namespace PatientEmpathy.Repository
         {
             var ptHn = new PatientHN();
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetPatientHn(epiNo)))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetPatientHn(epiNo)))
                     {
-                        if (reader.Read())
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            ptHn.HN = reader["Papmi_No"].ToString();
+                            if (reader.Read())
+                            {
+                                ptHn.HN = reader["Papmi_No"].ToString();
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -290,7 +393,10 @@ namespace PatientEmpathy.Repository
 
         public PatientInfo GetPatientInfo(string hn)
         {
-            var epiNo = GetData.GetLastEpisode(hn);
+            //var epiNo = GetData.GetLastEpisode(hn);
+
+            //_log.Info($"Start process GetPatientInfo |hn={hn}");
+
 
             var ptInfo = new PatientInfo();
 
@@ -301,46 +407,71 @@ namespace PatientEmpathy.Repository
                 hn = Regex.Replace(hn, @"^(.{2})(.{2})(.{6})$", "$1-$2-$3");
             }
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetPatientInfo(hn), con))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetPatientInfo(hn), con))
                     {
-                        if (!reader.Read()) return ptInfo;
-                        var url = "http://10.104.10.45/CRM_API/api/crm/GetListCRM?hn=" + HttpUtility.UrlEncode(hn);
-                        ptInfo.PAPMI_No = reader["PAPMI_No"].ToString();
-                        ptInfo.Name = IsNullOrEmpty(reader["TTL_Desc"].ToString()) ? reader["PAPMI_Name"] + " " + reader["PAPMI_Name2"] : reader["TTL_Desc"] + " " + reader["PAPMI_Name"] + " " + reader["PAPMI_Name2"];
-                        ptInfo.PAPMI_DOB = Helper.ConvertDate(reader["PAPMI_DOB"].ToString());
-                        ptInfo.PAPER_AgeYr = IsNullOrEmpty(reader["PAPER_AgeYr"].ToString()) ? 0 : Convert.ToInt16(reader["PAPER_AgeYr"].ToString());
-                        ptInfo.PAPER_AgeMth = IsNullOrEmpty(reader["PAPER_AgeMth"].ToString()) ? 0 : Convert.ToInt16(reader["PAPER_AgeMth"].ToString());
-                        ptInfo.PAPER_AgeDay = IsNullOrEmpty(reader["PAPER_AgeDay"].ToString()) ? 0 : Convert.ToInt16(reader["PAPER_AgeDay"].ToString());
-                        ptInfo.CTSEX_Desc = reader["CTSEX_Desc"].ToString();
-                        ptInfo.PAPER_StName = reader["PAPER_StName"].ToString();
-                        ptInfo.CTCIT_Desc = reader["CTCIT_Desc"].ToString();
-                        ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(), reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(), reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
-                        ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
-                        ptInfo.IsImage = GetData.IsImage(hn);
-                        ptInfo.AlertMsgs = GetData.GetAlertMsg(hn);
-                        ptInfo.PatientCategory = GetData.GetPatientCategory(hn);
-                        ptInfo.Episode = GetData.GetEpisode(hn);
-                        ptInfo.Appointments = GetData.GetAppointment(hn);
-                        ptInfo.Allergys = GetData.GetAllergys(hn);
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (!reader.Read()) return ptInfo;
+                            var url = "http://10.104.10.45/CRM_API/api/crm/GetListCRM?hn=" + HttpUtility.UrlEncode(hn);
+                            ptInfo.PAPMI_No = reader["PAPMI_No"].ToString();
+                            ptInfo.Name = IsNullOrEmpty(reader["TTL_Desc"].ToString().Trim())
+                                ? reader["PAPMI_Name"].ToString().Trim() + " " + reader["PAPMI_Name2"].ToString().Trim()
+                                : reader["TTL_Desc"].ToString().Trim() + " " + reader["PAPMI_Name"].ToString().Trim() + " " + reader["PAPMI_Name2"].ToString().Trim();
+                            ptInfo.PAPMI_DOB = Helper.ConvertDate(reader["PAPMI_DOB"].ToString());
+                            ptInfo.PAPER_AgeYr = IsNullOrEmpty(reader["PAPER_AgeYr"].ToString())
+                                ? 0
+                                : Convert.ToInt16(reader["PAPER_AgeYr"].ToString());
+                            ptInfo.PAPER_AgeMth = IsNullOrEmpty(reader["PAPER_AgeMth"].ToString())
+                                ? 0
+                                : Convert.ToInt16(reader["PAPER_AgeMth"].ToString());
+                            ptInfo.PAPER_AgeDay = IsNullOrEmpty(reader["PAPER_AgeDay"].ToString())
+                                ? 0
+                                : Convert.ToInt16(reader["PAPER_AgeDay"].ToString());
+                            ptInfo.CTSEX_Desc = reader["CTSEX_Desc"].ToString();
+                            ptInfo.PAPER_StName = reader["PAPER_StName"].ToString();
+                            ptInfo.CTCIT_Desc = reader["CTCIT_Desc"].ToString();
+                            ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(),
+                                reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(),
+                                reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
+                            ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
+                            var ptImg = GetData.GetPatientImage(hn, con);
+                            ptInfo.IsImage = ptImg.Item1;
+                            //ptInfo.PatientImage = ptImg.Item2;
+                            ptInfo.AlertMsgs = GetData.GetAlertMsg(hn, con);
+                            ptInfo.PatientCategory = GetData.GetPatientCategory(hn, con);
+                            ptInfo.Episode = GetData.GetEpisode(hn, con);
+                            ptInfo.Appointments = GetData.GetAppointment(hn, con);
+                            ptInfo.Allergys = GetData.GetAllergys(hn, con);
 
-                        try
-                        {
-                            ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
-                        }
-                        catch (Exception)
-                        {
-                            var crms = new List<CRM>
+                            try
                             {
-                                new CRM { CRM_Type = "Error" , CRM_DES = "Check CRMAPI"}
-                            };
-                            ptInfo.CRMs = crms;
+                                ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
+                            }
+                            catch (Exception)
+                            {
+                                var crms = new List<CRM>
+                                {
+                                    new CRM {CRM_Type = "Error", CRM_DES = "Check CRMAPI"}
+                                };
+                                ptInfo.CRMs = crms;
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    _log.Fatal("Fatal Error: ", e);
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
+                    //_log.Info($"End process GetPatientInfo |hn={hn}");
                 }
             }
 
@@ -366,41 +497,61 @@ namespace PatientEmpathy.Repository
                 hn = Regex.Replace(hn, @"^(.{2})(.{2})(.{6})$", "$1-$2-$3");
             }
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(QueryString.GetPatientInfo(hn), con))
+                try
                 {
-                    using (var reader = cmd.ExecuteReader())
+                    con.Open();
+                    using (var cmd = new CacheCommand(QueryString.GetPatientInfo(hn), con))
                     {
-                        if (reader == null || !reader.Read()) return ptInfo;
-                        ptInfo = new PatientInfo();
-                        var url = "http://10.104.10.45/CRM_API/api/crm/GetListCRM?hn=" + HttpUtility.UrlEncode(hn);
-                        ptInfo.PAPMI_No = reader["PAPMI_No"].ToString();
-                        ptInfo.Name = IsNullOrEmpty(reader["TTL_Desc"].ToString()) ? reader["PAPMI_Name"].ToString() + " " + reader["PAPMI_Name2"].ToString() : reader["TTL_Desc"].ToString() + " " + reader["PAPMI_Name"].ToString() + " " + reader["PAPMI_Name2"].ToString();
-                        ptInfo.PAPMI_DOB = Helper.ConvertDate(reader["PAPMI_DOB"].ToString());
-                        ptInfo.PAPER_AgeYr = IsNullOrEmpty(reader["PAPER_AgeYr"].ToString()) ? 0 : Convert.ToInt16(reader["PAPER_AgeYr"].ToString());
-                        ptInfo.CTSEX_Desc = reader["CTSEX_Desc"].ToString();
-                        ptInfo.PAPER_StName = reader["PAPER_StName"].ToString();
-                        ptInfo.CTCIT_Desc = reader["CTCIT_Desc"].ToString();
-                        ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(), reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(), reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
-                        ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
-                        ptInfo.Episode = GetData.GetEpisode(epiNo);
-                        ptInfo.Appointments = GetData.GetAppointment(hn);
-                        ptInfo.Allergys = GetData.GetAllergys(hn);
-                        try
+                        using (var reader = cmd.ExecuteReader())
                         {
-                            ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
-                        }
-                        catch (Exception)
-                        {
-                            var crms = new List<CRM>
+                            if (reader == null || !reader.Read()) return ptInfo;
+                            ptInfo = new PatientInfo();
+                            var url = "http://10.104.10.45/CRM_API/api/crm/GetListCRM?hn=" + HttpUtility.UrlEncode(hn);
+                            ptInfo.PAPMI_No = reader["PAPMI_No"].ToString();
+                            ptInfo.Name = IsNullOrEmpty(reader["TTL_Desc"].ToString())
+                                ? reader["PAPMI_Name"].ToString() + " " + reader["PAPMI_Name2"].ToString()
+                                : reader["TTL_Desc"].ToString() + " " + reader["PAPMI_Name"].ToString() + " " +
+                                  reader["PAPMI_Name2"].ToString();
+                            ptInfo.PAPMI_DOB = Helper.ConvertDate(reader["PAPMI_DOB"].ToString());
+                            ptInfo.PAPER_AgeYr = IsNullOrEmpty(reader["PAPER_AgeYr"].ToString())
+                                ? 0
+                                : Convert.ToInt16(reader["PAPER_AgeYr"].ToString());
+                            ptInfo.CTSEX_Desc = reader["CTSEX_Desc"].ToString();
+                            ptInfo.PAPER_StName = reader["PAPER_StName"].ToString();
+                            ptInfo.CTCIT_Desc = reader["CTCIT_Desc"].ToString();
+                            ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(),
+                                reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(),
+                                reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
+                            ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
+                            ptInfo.Episode = GetData.GetEpisode(epiNo, con);
+                            ptInfo.Appointments = GetData.GetAppointment(hn, con);
+                            ptInfo.Allergys = GetData.GetAllergys(hn, con);
+                            try
                             {
-                                new CRM { CRM_Type = "Error" , CRM_DES = "Check CRMAPI"}
-                            };
-                            ptInfo.CRMs = crms;
+                                ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
+                            }
+                            catch (Exception)
+                            {
+                                var crms = new List<CRM>
+                                {
+                                    new CRM {CRM_Type = "Error", CRM_DES = "Check CRMAPI"}
+                                };
+                                ptInfo.CRMs = crms;
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -455,6 +606,7 @@ namespace PatientEmpathy.Repository
 
         public HttpResponseMessage GetPatientImage(string hn)
         {
+            //_log.Info($"Start process GetPatientImage |{hn}");
             var dt = InterSystemsDa.DtBindDataCommand(QueryString.GetPatientImage(hn), Constants.Cache89);
 
             var response = Helper.DataTableToImage(dt, 0, 0);
@@ -473,9 +625,62 @@ namespace PatientEmpathy.Repository
 
         public HttpResponseMessage GetPatientImage(string hn, int width, int height)
         {
+            //_log.Info($"Start process GetPatientImage |{hn}|{width}|{height}");
             var dt = InterSystemsDa.DtBindDataCommand(QueryString.GetPatientImage(hn), Constants.Cache89);
 
             var response = Helper.DataTableToImage(dt, width, height);
+
+            return response;
+        }
+
+        public HttpResponseMessage GetPatientImagePostgres(string hn)
+        {
+            //_log.Info($"Start process GetPatientImagePostgres |{hn}");
+            HttpResponseMessage response;
+            using (var con = new NpgsqlConnection(Constants.PostgreSQL))
+            {
+                con.Open();
+                var query = QueryString.GetPatientImagePostgres(hn);
+                using (var cmd = new NpgsqlCommand(query.Item1, con))
+                {
+                    foreach (var pair in query.Item2)
+                    {
+                        cmd.Parameters.AddWithValue(pair.Key, pair.Value);
+                    }
+
+                    var obj = cmd.ExecuteScalar();
+
+                    response = obj != null ? Helper.ObjectToImage(obj, 0, 0) : new HttpResponseMessage(HttpStatusCode.NotFound);
+                }
+
+                con.Close();
+            }
+
+            return response;
+        }
+
+        public HttpResponseMessage GetPatientImagePostgres(string hn, int width, int height)
+        {
+            //_log.Info($"Start process GetPatientImagePostgres |{hn}|{width}|{height}");
+            HttpResponseMessage response;
+            using (var con = new NpgsqlConnection(Constants.PostgreSQL))
+            {
+                con.Open();
+                var query = QueryString.GetPatientImagePostgres(hn);
+                using (var cmd = new NpgsqlCommand(query.Item1, con))
+                {
+                    foreach (var pair in query.Item2)
+                    {
+                        cmd.Parameters.AddWithValue(pair.Key, pair.Value);
+                    }
+
+                    var obj = cmd.ExecuteScalar();
+
+                    response = obj != null ? Helper.ObjectToImage(obj, width, height) : new HttpResponseMessage(HttpStatusCode.NotFound);
+                }
+
+                con.Close();
+            }
 
             return response;
         }
@@ -546,17 +751,18 @@ namespace PatientEmpathy.Repository
 
             var query = QueryString.GetMedDisch(hn);
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(query.Item1, con))
+                try
                 {
-                    foreach (var pair in query.Item2)
+                    con.Open();
+                    using (var cmd = new CacheCommand(query.Item1, con))
                     {
-                        cmd.AddInputParameters(new { key = pair.Value });
-                    }
-                    try
-                    {
+                        foreach (var pair in query.Item2)
+                        {
+                            cmd.AddInputParameters(new { key = pair.Value });
+                        }
+
                         using (var reader = cmd.ExecuteReader())
                         {
                             while (reader.Read())
@@ -571,11 +777,16 @@ namespace PatientEmpathy.Repository
                             }
                         }
                     }
-                    catch (Exception)
-                    {
-
-                        throw;
-                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -587,29 +798,42 @@ namespace PatientEmpathy.Repository
 
             var query = QueryString.GetFinDisc(hn);
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(query.Item1, con))
+                try
                 {
-                    foreach (var pair in query.Item2)
+                    con.Open();
+                    using (var cmd = new CacheCommand(query.Item1, con))
                     {
-                        var key = pair.Key;
-                        cmd.AddInputParameters(new { key = pair.Value });
-                    }
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        foreach (var pair in query.Item2)
                         {
-                            var isFinDisch = !IsNullOrEmpty(reader["PAADM_FinDischDate"].ToString());
-                            var finDisch = new FinDisch()
+                            var key = pair.Key;
+                            cmd.AddInputParameters(new { key = pair.Value });
+                        }
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                PAADM_ADMNO = reader["PAADM_ADMNO"].ToString(),
-                                IsFinDisch = isFinDisch
-                            };
-                            finDischs.Add(finDisch);
+                                var isFinDisch = !IsNullOrEmpty(reader["PAADM_FinDischDate"].ToString());
+                                var finDisch = new FinDisch()
+                                {
+                                    PAADM_ADMNO = reader["PAADM_ADMNO"].ToString(),
+                                    IsFinDisch = isFinDisch
+                                };
+                                finDischs.Add(finDisch);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -622,28 +846,41 @@ namespace PatientEmpathy.Repository
 
             var query = QueryString.GetDischg(hn);
 
-            using (var con = new CacheConnection(Constants.Cache89))
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
             {
-                con.Open();
-                using (var cmd = new CacheCommand(query.Item1, con))
+                try
                 {
-                    foreach (var pair in query.Item2)
+                    con.Open();
+                    using (var cmd = new CacheCommand(query.Item1, con))
                     {
-                        cmd.AddInputParameters(new { key = pair.Value });
-                    }
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
+                        foreach (var pair in query.Item2)
                         {
-                            var isDischg = !IsNullOrEmpty(reader["PAADM_DischgDate"].ToString());
-                            var dischg = new Dischg()
+                            cmd.AddInputParameters(new { key = pair.Value });
+                        }
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
                             {
-                                PAADM_ADMNO = reader["PAADM_ADMNO"].ToString(),
-                                IsDischg = isDischg
-                            };
-                            dischgs.Add(dischg);
+                                var isDischg = !IsNullOrEmpty(reader["PAADM_DischgDate"].ToString());
+                                var dischg = new Dischg()
+                                {
+                                    PAADM_ADMNO = reader["PAADM_ADMNO"].ToString(),
+                                    IsDischg = isDischg
+                                };
+                                dischgs.Add(dischg);
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
                 }
             }
 
@@ -668,15 +905,17 @@ namespace PatientEmpathy.Repository
             return discharges;
         }
 
-        public bool UpdateAllDisch()
+        public Tuple<bool, List<PatientDischarges>> UpdateAllDisch()
         {
+            //_log.Info($"Start process UpdateAllDisch");
+
             // get hn คนไข้ที่ยังไม่ทำ FinDisch
             var dtAllPatients = PostgreSqlda.DtByProcedure(Constants.GetPatientAll, Constants.PostgreSQL);
             var hns = Empty;
 
             if (!(dtAllPatients.Rows.Count > 0))
             {
-                return false;
+                return new Tuple<bool, List<PatientDischarges>>(false, new List<PatientDischarges>());
             }
 
             for (var index = 0; index < dtAllPatients.Rows.Count; index++)
@@ -702,7 +941,9 @@ namespace PatientEmpathy.Repository
             //update Json To Postgres
             var upJson = PostgreSqlda.UpJsonStringDischs(jsonData);
 
-            return upJson;
+            //_log.Info($"End process UpdateAllDisch |status={upJson}|data={jsonData}");
+
+            return new Tuple<bool, List<PatientDischarges>>(upJson, data);
         }
 
         #region now is not used
@@ -815,6 +1056,7 @@ namespace PatientEmpathy.Repository
 
             return isSuccess;
         }
+
         #endregion
 
         public bool UpdatePromptPay(string hn, string message)
@@ -829,25 +1071,36 @@ namespace PatientEmpathy.Repository
 
             return isSuccess;
         }
-        public bool UpdateRegisLoc(string hn)
+
+        /// <summary>
+        /// Upate all location of patient to postgres
+        /// </summary>
+        /// <param name="hn"></param>
+        /// <returns></returns>
+        public Tuple<bool, string> UpdateRegisLoc(string hn)
         {
 
             hn = Helper.HnFormat(hn);
 
             // get PatientRegisLoc, LocRegis
-            var regisLoc = GetData.GetPatientRegisLoc(hn);
+            //var regisLoc = GetData.GetPatientRegisLoc(hn);
+
+            // get regis, consult location
+            var locRegisConsult = GetData.GetRegisConsultLocation(hn);
 
             // insert string locreig to posgress => loc1|loc2 UpListRegisLoc
-            var upRegis = PostgreSqlda.UpRegisLoc(regisLoc.Item1.Papmi_No, regisLoc.Item1.RegisLoc);
+            var upRegis = PostgreSqlda.UpRegisLoc(locRegisConsult.Papmi_No, locRegisConsult.RegisLoc);
 
             // insert list model locRegis to posgress convert to string json format เปลี่ยนไป up จาก store procedure
             //var upLstRegis = PostgreSQLDA.UpListRegisLoc(hn, regisLoc.Item2);
 
-            return upRegis;
+            //_log.Info($"UpdateRegisLoc |hn={hn}|status={upRegis}|locs={locRegisConsult.RegisLoc}");
+
+            return new Tuple<bool, string>(upRegis, locRegisConsult.RegisLoc);
         }
         public bool UpdateNewRegis(string hn, string loc)
         {
-
+            //_log.Info($"Start process UpdateNewRegis |hn={hn}|loc={loc}");
             //var regisLoc = GetData.GetPatientRegisLoc(hn, loc);
 
             // update list by store procedure ที่ทำการกดให้เป็น true
@@ -891,8 +1144,10 @@ namespace PatientEmpathy.Repository
 
             return false;
         }
-        public bool UpdatePatientBilled()
+        public Tuple<bool, List<PatientBilled>> UpdatePatientBilled()
         {
+            //_log.Info($"Start process UpdatePatientBilled");
+
             var listPatientBilled = new List<PatientBilled>();
 
             // get all hn ที่ทำการปิด finDisc
@@ -902,9 +1157,9 @@ namespace PatientEmpathy.Repository
 
             if (!(dtPtNoBilled.Rows.Count > 0))
             {
-                return false;
+                return new Tuple<bool, List<PatientBilled>>(false, new List<PatientBilled>());
             }
-            
+
             // get all from trakcare
             for (var index = 0; index < dtPtNoBilled.Rows.Count; index++)
             {
@@ -972,10 +1227,15 @@ namespace PatientEmpathy.Repository
             //update Json To Postgres
             var upJson = PostgreSqlda.UpPatientBilledJson(jsonData);
 
-            return upJson;
+            //_log.Info($"End process UpdatePatientBilled |status={upJson}|data={jsonData}");
+
+            return new Tuple<bool, List<PatientBilled>>(upJson, listPatientBilled);
         }
-        public bool UpdatePharCollect()
+        public Tuple<bool, List<PharCollect>> UpdatePharCollect()
         {
+
+            //_log.Info($"Start process UpdatePharCollect");
+
             // get hn patient MedDisch but not Financial
             var dt = PostgreSqlda.DtByProcedure(Constants.GetMedDischForPharCollect, Constants.PostgreSQL);
             var dtRowCount = dt.Rows.Count;
@@ -983,7 +1243,7 @@ namespace PatientEmpathy.Repository
 
             if (!(dtRowCount > 0))
             {
-                return false;
+                return new Tuple<bool, List<PharCollect>>(false, new List<PharCollect>());
             }
 
             for (var i = 0; i < dtRowCount; i++)
@@ -999,7 +1259,7 @@ namespace PatientEmpathy.Repository
             var dtAllPatientPharCollect = GetData.GetAllPatientPharCollect(hns);
 
             // clear ข้อมูล OEORI_PrescNo ที่เป็น null
-            var dtAllPatientPharCollectClearNull = 
+            var dtAllPatientPharCollectClearNull =
                 Helper.DataTableClearNull(dtAllPatientPharCollect, "OEORI_PrescNo");
 
             // convert datatable to list model
@@ -1011,7 +1271,164 @@ namespace PatientEmpathy.Repository
             //update Json To Postgres
             var upJson = PostgreSqlda.UpPharCollect(jsonData);
 
-           return upJson;
+            //_log.Info($"End process UpdatePharCollect |status={upJson}|data={jsonData}");
+
+            return new Tuple<bool, List<PharCollect>>(upJson, data);
+        }
+
+        /// <summary>
+        /// get patien ย้อนหลัง
+        /// </summary>
+        /// <param name="minute"></param>
+        /// <returns>list patient</returns>
+        public List<string> GetPatientAdmissionByTime(double minute)
+        {
+            var patientList = new List<string>();
+            var query = QueryString.GetPatientAdmissionByTime(minute);
+            var con = ConnectCache.DBUtils.GetDBConnection();
+
+            try
+            {
+                con.Open();
+                using (var cmd = new CacheCommand(query.Item1, con))
+                {
+                    foreach (var pair in query.Item2)
+                    {
+                        cmd.AddInputParameters(new { key = pair.Value });
+                    }
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            patientList.Add(reader["PAPMI_No"].ToString());
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
+            finally
+            {
+                con.Close();
+                con.Dispose();
+            }
+
+            return patientList;
+        }
+
+        public Tuple<int, List<PatientInfo>> GetPatientOPDCurrent(double minute)
+        {
+            var patients = new List<PatientInfo>();
+
+            var hns = GetPatientAdmissionByTime(minute);
+
+            using (var con = ConnectCache.DBUtils.GetDBConnection())
+            {
+                try
+                {
+                    con.Open();
+
+                    foreach (var hn in hns)
+                    {
+                        var ptInfo = new PatientInfo();
+                        using (var cmd = new CacheCommand(QueryString.GetPatientInfo(hn), con))
+                        {
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                if (!reader.Read()) return new Tuple<int, List<PatientInfo>>(hns.Count, patients);
+                                var url = "http://10.104.10.45/CRM_API/api/crm/GetListCRM?hn=" + HttpUtility.UrlEncode(hn);
+                                ptInfo.PAPMI_No = reader["PAPMI_No"].ToString();
+                                ptInfo.Name = IsNullOrEmpty(reader["TTL_Desc"].ToString())
+                                    ? reader["PAPMI_Name"] + " " + reader["PAPMI_Name2"]
+                                    : reader["TTL_Desc"] + " " + reader["PAPMI_Name"] + " " + reader["PAPMI_Name2"];
+                                ptInfo.PAPMI_DOB = Helper.ConvertDate(reader["PAPMI_DOB"].ToString());
+                                ptInfo.PAPER_AgeYr = IsNullOrEmpty(reader["PAPER_AgeYr"].ToString())
+                                    ? 0
+                                    : Convert.ToInt16(reader["PAPER_AgeYr"].ToString());
+                                ptInfo.PAPER_AgeMth = IsNullOrEmpty(reader["PAPER_AgeMth"].ToString())
+                                    ? 0
+                                    : Convert.ToInt16(reader["PAPER_AgeMth"].ToString());
+                                ptInfo.PAPER_AgeDay = IsNullOrEmpty(reader["PAPER_AgeDay"].ToString())
+                                    ? 0
+                                    : Convert.ToInt16(reader["PAPER_AgeDay"].ToString());
+                                ptInfo.CTSEX_Desc = reader["CTSEX_Desc"].ToString();
+                                ptInfo.PAPER_StName = reader["PAPER_StName"].ToString();
+                                ptInfo.CTCIT_Desc = reader["CTCIT_Desc"].ToString();
+                                ptInfo.Address = Helper.GetAddress(reader["PAPER_StName"].ToString(),
+                                    reader["CITAREA_Desc"].ToString(), reader["CTCIT_Desc"].ToString(),
+                                    reader["PROV_Desc"].ToString(), reader["CTZIP_Code"].ToString());
+                                ptInfo.PAPER_TelH = reader["PAPER_TelH"].ToString();
+                                var ptImg = GetData.GetPatientImage(hn, con);
+                                ptInfo.IsImage = ptImg.Item1;
+                                //ptInfo.PatientImage = ptImg.Item2;
+                                ptInfo.AlertMsgs = GetData.GetAlertMsg(hn, con);
+                                ptInfo.PatientCategory = GetData.GetPatientCategory(hn, con);
+                                ptInfo.Episode = GetData.GetEpisode(hn, con);
+                                ptInfo.Appointments = GetData.GetAppointment(hn, con);
+                                ptInfo.Allergys = GetData.GetAllergys(hn, con);
+
+                                try
+                                {
+                                    ptInfo.CRMs = Helper.SerializedJsonData<List<CRM>>(url);
+                                }
+                                catch (Exception)
+                                {
+                                    var crms = new List<CRM>
+                                {
+                                    new CRM {CRM_Type = "Error", CRM_DES = "Check CRMAPI"}
+                                };
+                                    ptInfo.CRMs = crms;
+                                }
+                            }
+                        }
+                        patients.Add(ptInfo);
+                    }
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
+                finally
+                {
+                    con.Close();
+                    con.Dispose();
+                }
+            }
+
+            return new Tuple<int, List<PatientInfo>>(hns.Count, patients);
+        }
+
+        public Tuple<int, List<PatientInfo>> GetPatientOPDCurrentRest(double minute)
+        {
+            var patients = new List<PatientInfo>();
+            var hns = GetPatientAdmissionByTime(minute);
+
+            foreach (var hn in hns)
+            {
+                var url = "http://10.104.10.45/PatientEmpathyAPITest/api/Patient/GetPatientInfo?hn=" + hn;
+
+                var patient = Helper.SerializedJsonData<PatientInfo>(url);
+
+                patients.Add(patient);
+            }
+
+
+            return new Tuple<int, List<PatientInfo>>(hns.Count, patients);
+        }
+
+        public void RemoveAllIdleConnections()
+        {
+            ConnectCache.DBUtils.RemoveAllIdleConnections();
+        }
+
+        public HttpResponseMessage GetImageLineByUserId(string userId, int width, int height)
+        {
+            return MySqlDA.GetImageLineByUserId(userId, width, height);
         }
     }
 }

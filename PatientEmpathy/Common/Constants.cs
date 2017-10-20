@@ -9,6 +9,7 @@ namespace PatientEmpathy.Common
         public static string Chache112 = ConfigurationManager.ConnectionStrings["Chache112"].ToString();
         public static string svhsql3 = ConfigurationManager.ConnectionStrings["svh-sql3"].ToString();
         public static string PostgreSQL = ConfigurationManager.ConnectionStrings["PostgreSQL"].ToString();
+        public static string MySql = ConfigurationManager.ConnectionStrings["MySql"].ConnectionString;
         #endregion
 
         #region postgresql
@@ -38,6 +39,10 @@ namespace PatientEmpathy.Common
         public static string Hn = ConfigurationManager.AppSettings["hn"];
         public static string Hnlist = ConfigurationManager.AppSettings["hnlist"];
         public static string Jsondata = ConfigurationManager.AppSettings["jsondata"];
+        #endregion
+
+        #region MySql
+        public static string GetLineImageByUserId = ConfigurationManager.AppSettings["GetLineImageByUserId"];
         #endregion
 
     }

@@ -7,6 +7,7 @@ namespace PatientEmpathy.Models
         public string PAPMI_No { get; set; }
         public List<EpiBilled> ListEpiBilled { get; set; }
         public bool FlagBilled { get; set; }
+        public string LastDateTimePrinted { get; set; }
     }
     public class EpiBilled
     {
@@ -19,5 +20,6 @@ namespace PatientEmpathy.Models
         public string ARPBL_BillNo { get; set; }
         public string ARPBL_DatePrinted { get; set; }
         public string ARPBL_TimePrinted { get; set; }
+        public string ARPBL_DateTimePrinted { get; set; }
     }
 }

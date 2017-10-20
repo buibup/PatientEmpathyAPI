@@ -1,1 +1,1 @@
-# PatientEmpathyAPI
+เป็นการต่อขยายจากระบบ Empathy Phase I โดยเพิ่มเติมในส่วนของ กรณีถ้ามีคนไข้ Request Fast Check Out จากระบบ รพ. จะต้องมีการแสดง Icon เพิ่มเติม และเพิ่มการแสดง ​​Icon Med Discharge,Finacecial Discharge,Final Discharge,Phar Collect, Print Bill เพื่อ Disp
