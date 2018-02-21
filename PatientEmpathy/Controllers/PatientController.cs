@@ -1,4 +1,6 @@
-﻿using PatientEmpathy.Models;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using PatientEmpathy.Models;
 using PatientEmpathy.Repository;
 using System;
 using System.Collections.Generic;
@@ -216,5 +218,43 @@ namespace PatientEmpathy.Controllers
         {
             _patientRepository.RemoveAllIdleConnections();
         }
+
+        [HttpGet]
+        public void SetLogAccess(string dept, string type, string value)
+        {
+            _patientRepository.SetLogAccess(dept, type, value);
+        }
+
+        [HttpPost]
+        public void UploadImageHN(HttpRequestMessage req)
+        {
+            var data = req.Content.ReadAsStringAsync().Result;
+            ImageHN img = JsonConvert.DeserializeObject<ImageHN>(data);
+            _patientRepository.UploadImageHN(img.hn, img.extension, img.imageBase64);
+        }
+
+        [HttpPost]
+        public void UploadImageMID(HttpRequestMessage req)
+        {
+            var data = req.Content.ReadAsStringAsync().Result;
+            ImageMID img = JsonConvert.DeserializeObject<ImageMID>(data);
+            _patientRepository.UploadImageMID(img.mid, img.extension, img.imageBase64);
+        }
+        
+    }
+
+
+    public class ImageHN
+    {
+        public string hn { get; set; }
+        public string extension { get; set; }
+        public string imageBase64 { get; set; }
+    }
+
+    public class ImageMID
+    {
+        public string mid { get; set; }
+        public string extension { get; set; }
+        public string imageBase64 { get; set; }
     }
 }

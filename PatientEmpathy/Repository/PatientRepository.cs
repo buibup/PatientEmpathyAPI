@@ -13,12 +13,13 @@ using Newtonsoft.Json;
 using static System.String;
 using System.Net;
 using log4net;
+using System.IO;
 
 namespace PatientEmpathy.Repository
 {
     public class PatientRepository : IPatientRepository
     {
-        private static readonly ILog _log = GlobalConfig.GetLogManager(typeof(PatientRepository));
+        //private static readonly ILog _log = GlobalConfig.GetLogManager(typeof(PatientRepository));
 
         public PatientRepository()
         {
@@ -463,9 +464,9 @@ namespace PatientEmpathy.Repository
                         }
                     }
                 }
-                catch (Exception e)
+                catch //(Exception e)
                 {
-                    _log.Fatal("Fatal Error: ", e);
+                    //_log.Fatal("Fatal Error: ", e);
                 }
                 finally
                 {
@@ -1429,6 +1430,54 @@ namespace PatientEmpathy.Repository
         public HttpResponseMessage GetImageLineByUserId(string userId, int width, int height)
         {
             return MySqlDA.GetImageLineByUserId(userId, width, height);
+        }
+
+        public void SetLogAccess(string dept, string type, string value)
+        {
+            try
+            {
+                var TimeStamp = DateTime.Now;
+                var CallerIp = HttpContext.Current.Request.UserHostAddress;
+                var CallerAgent = HttpContext.Current.Request.UserAgent;
+                var CalledUrl = HttpContext.Current.Request.Url.OriginalString;
+
+                var url = Constants.logEmpathy + "?dept=" + dept + "&ip=" + CallerIp + "&type=" + type + "&value=" + value;
+                var oAuthUrl = string.Format(format: url);
+
+                var httpWebRequest = (HttpWebRequest)WebRequest.Create(oAuthUrl);
+                //httpWebRequest.ContentType = "application/json";
+                httpWebRequest.Method = "GET";
+
+                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
+            }
+            catch (Exception ex){
+                throw ex;
+            }
+        }
+
+        public void UploadImageHN(string hn, string extension, string imageBase64)
+        {
+            var filename = Constants.dirImageHN + hn + extension;
+
+            var bytes = Convert.FromBase64String(imageBase64);
+            using (var imageFile = new FileStream(filename, FileMode.Create))
+            {
+                imageFile.Write(bytes, 0, bytes.Length);
+                imageFile.Flush();
+            }
+
+        }
+
+        public void UploadImageMID(string mid, string extension, string imageBase64)
+        {
+            var filename = Constants.dirImageMID + mid + extension;
+
+            var bytes = Convert.FromBase64String(imageBase64);
+            using (var imageFile = new FileStream(filename, FileMode.Create))
+            {
+                imageFile.Write(bytes, 0, bytes.Length);
+                imageFile.Flush();
+            }
         }
     }
 }

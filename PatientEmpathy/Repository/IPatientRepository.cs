@@ -46,5 +46,8 @@ namespace PatientEmpathy.Repository
         Tuple<int, List<PatientInfo>> GetPatientOPDCurrent(double minute);
         Tuple<int, List<PatientInfo>> GetPatientOPDCurrentRest(double minute);
         void RemoveAllIdleConnections();
+        void SetLogAccess(string dept, string type, string value);
+        void UploadImageHN(string hn, string extension, string imageBase64);
+        void UploadImageMID(string mid, string extension, string imageBase64);
     }
 }

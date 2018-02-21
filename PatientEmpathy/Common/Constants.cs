@@ -45,5 +45,11 @@ namespace PatientEmpathy.Common
         public static string GetLineImageByUserId = ConfigurationManager.AppSettings["GetLineImageByUserId"];
         #endregion
 
+        // Set Log Empathy URL
+        public static string logEmpathy = ConfigurationManager.AppSettings["logEmpathy"];
+
+        // Set Directory Image Empathy Location
+        public static string dirImageHN = ConfigurationManager.AppSettings["dirImageHN"];
+        public static string dirImageMID = ConfigurationManager.AppSettings["dirImageMID"];
     }
 }
